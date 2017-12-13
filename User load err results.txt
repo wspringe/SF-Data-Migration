@@ -1,0 +1,121 @@
+﻿--- Starting SF_BulkOps for User_Load2 V3.5.3
+16:30:33: Run the DBAmpNet2.exe program.
+16:30:33: DBAmpNet2 3.5.3.0 (c) Copyright 2015-2017 forceAmp.com LLC
+16:30:33: Parameters: upsert User_Load2 220A10058 SFDCTargetOrg SFDC_TARGET 
+16:30:35: Drop User_Load2_Result if it exists.
+16:30:35: Create User_Load2_Result with new structure.
+16:30:50: Warning: Column Accepted_Legal_Terms__c ignored because it does not exist in the user object.
+16:30:50: Column AccountId ignored because it not creatable in the user object.
+16:30:50: Warning: Column Addendum_DocuSign_Delivery__c ignored because it does not exist in the user object.
+16:30:50: Column BadgeText ignored because it not creatable in the user object.
+16:30:50: Column BannerPhotoUrl ignored because it not creatable in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Account__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Account_ID__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Account_Name__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__AssetManagementView__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__AssignRemedyforceLic__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Broadcast_ticker_speed__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Building__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Business_Hours__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Business_Hours_ID__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__ChatStatus__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__CIManagementView__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__ContactId__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__EnableChat__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Extension__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__FP_Login_Validated__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__FPLoginID__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__ImageName__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__IsOutOfOffice__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__IsRemedyforceAdministrator__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__IsStaffUser__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__LastAvailableTime__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__LastChatEndTime__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Manage_ServiceDesk_Staff_Member__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Note__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__pager__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Picture__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__remarks__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Remedyforce_Casual_User__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Remedyforce_Knowledge_User__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__Room__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__SelfService_Preferences__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__skipQVWizIntro__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__UniqueUserIDInSource__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column BMCServiceDesk__VIP__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Brand__c ignored because it does not exist in the user object.
+16:30:50: Column CreatedById ignored because it not creatable in the user object.
+16:30:50: Column CreatedDate ignored because it not creatable in the user object.
+16:30:50: Warning: Column CSales_ID__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column dsfs__DSProSFMembershipStatus__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column dsfs__DSProSFPassword__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column dsfs__DSProSFUsername__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Exclude_from_90_day_policy__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Exclude_from_Traffic_Reminder__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Expiration_Date__c ignored because it does not exist in the user object.
+16:30:50: Column FullPhotoUrl ignored because it not creatable in the user object.
+16:30:50: Column Id ignored because it not creatable in the user object.
+16:30:50: Column IsExtIndicatorVisible ignored because it not creatable in the user object.
+16:30:50: Warning: Column IsPortalEnabled ignored because it does not exist in the user object.
+16:30:50: Column IsProfilePhotoActive ignored because it not creatable in the user object.
+16:30:50: Column LastLoginDate ignored because it not creatable in the user object.
+16:30:50: Column LastModifiedById ignored because it not creatable in the user object.
+16:30:50: Column LastModifiedDate ignored because it not creatable in the user object.
+16:30:50: Column LastPasswordChangeDate ignored because it not creatable in the user object.
+16:30:50: Column LastReferencedDate ignored because it not creatable in the user object.
+16:30:50: Column LastViewedDate ignored because it not creatable in the user object.
+16:30:50: Warning: Column Latest_Lead_On__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Loop__dsPassword__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Loop__dsToken__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Loop__LOOPlus_Tester__c ignored because it does not exist in the user object.
+16:30:50: Column MediumBannerPhotoUrl ignored because it not creatable in the user object.
+16:30:50: Column MediumPhotoUrl ignored because it not creatable in the user object.
+16:30:50: Warning: Column MetroID__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column MH_Division__c ignored because it does not exist in the user object.
+16:30:50: Column Name ignored because it not creatable in the user object.
+16:30:50: Column OfflinePdaTrialExpirationDate ignored because it not creatable in the user object.
+16:30:50: Column OfflineTrialExpirationDate ignored because it not creatable in the user object.
+16:30:50: Warning: Column pi__Can_View_Not_Assigned_Prospects__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column pi__Pardot_Api_Key__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column pi__Pardot_User_Id__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column pi__Pardot_User_Key__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column pi__Pardot_User_Role__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column PortalRole ignored because it does not exist in the user object.
+16:30:50: Warning: Column Primary_Community__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column Profile_Name__c ignored because it does not exist in the user object.
+16:30:50: Column SmallBannerPhotoUrl ignored because it not creatable in the user object.
+16:30:50: Column SmallPhotoUrl ignored because it not creatable in the user object.
+16:30:50: Column SystemModstamp ignored because it not creatable in the user object.
+16:30:50: Warning: Column UserContactID__c ignored because it does not exist in the user object.
+16:30:50: Warning: Column UserPermissionsChatterAnswersUser ignored because it does not exist in the user object.
+16:30:50: Warning: Column UserPermissionsLiveAgentUser ignored because it does not exist in the user object.
+16:30:50: Warning: Column UserPreferencesContentEmailAsAndWhen ignored because it does not exist in the user object.
+16:30:50: Warning: Column UserPreferencesContentNoEmail ignored because it does not exist in the user object.
+16:30:50: Warning: Column UserRoleIdSource ignored because it does not exist in the user object.
+16:30:50: Column UserType ignored because it not creatable in the user object.
+17:07:49: 28428 rows read from SQL Table.
+17:07:49: 25187 rows failed. See Error column of row for more information.
+17:07:49: 3241 rows successfully processed.
+17:07:49: Errors occurred. See Error column of row for more information.
+17:08:03: Error: Unable to update SQL table.
+17:08:03: System.InvalidOperationException: The given value of type String from the data source cannot be converted to type nvarchar of the specified target column. ---> System.InvalidOperationException: String or binary data would be truncated.
+   at System.Data.SqlClient.SqlBulkCopy.ConvertValue(Object value, _SqlMetaData metadata, Boolean isNull, Boolean& isSqlType, Boolean& coercedToDataFeed)
+   --- End of inner exception stack trace ---
+   at System.Data.SqlClient.SqlBulkCopy.ConvertValue(Object value, _SqlMetaData metadata, Boolean isNull, Boolean& isSqlType, Boolean& coercedToDataFeed)
+   at System.Data.SqlClient.SqlBulkCopy.ReadWriteColumnValueAsync(Int32 col)
+   at System.Data.SqlClient.SqlBulkCopy.CopyColumnsAsync(Int32 col, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.CopyRowsAsync(Int32 rowsSoFar, Int32 totalRows, CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.CopyBatchesAsyncContinued(BulkCopySimpleResultSet internalResults, String updateBulkCommandText, CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.CopyBatchesAsync(BulkCopySimpleResultSet internalResults, String updateBulkCommandText, CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestContinuedAsync(BulkCopySimpleResultSet internalResults, CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestAsync(CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalAsync(CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteRowSourceToServerAsync(Int32 columnCount, CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServer(DataTable table, DataRowState rowState)
+   at DBAmpNet2.BulkOpsSoap.LoadRecords()
+17:08:05: Percent Failed = 100.000.
+17:08:05: Error: DBAmpNet2.exe was unsuccessful.
+17:08:05: Error: Command string is C:\"Program Files"\DBAmp\DBAmpNet2.exe BulkOpsSoap "upsert"  "User_Load2"  "220A10058"  "SFDCTargetOrg"  "SFDC_TARGET"  "username"  " " 
+--- Ending SF_BulkOps. Operation FAILED.
+Msg 50000, Level 16, State 1, Procedure SF_BulkOps, Line 293
+SF_BulkOps Error: 16:30:33: DBAmpNet2 3.5.3.0 (c) Copyright 2015-2017 forceAmp.com LLC16:30:33: Parameters: upsert User_Load2 220A10058 SFDCTargetOrg SFDC_TARGET 16:30:35: Drop User_Load2_Result if it exists.16:30:35: Create User_Load2_Result with new structure.16:30:50: Warning: Column Accepted_Legal_Terms__c ignored because it does not exist in the user object.16:30:50: Column AccountId ignored because it not creatable in the user object.16:30:50: Warning: Column Addendum_DocuSign_Delivery__c ignored because it does not exist in the user object.16:30:50: Column BadgeText ignored because it not creatable in the user object.16:30:50: Column BannerPhotoUrl ignored because it not creatable in the user object.16:30:50: Warning: Column BMCServiceDesk__Account__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__Account_ID__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__Account_Name__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__AssetManagementView__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__AssignRemedyforceLic__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__Broadcast_ticker_speed__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__Building__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__Business_Hours__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__Business_Hours_ID__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__ChatStatus__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__CIManagementView__c ignored because it does not exist in the user object.16:30:50: Warning: Column BMCServiceDesk__ContactId__c ignored because it does not e...
