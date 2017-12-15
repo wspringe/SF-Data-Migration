@@ -56,6 +56,10 @@ AS
   EXEC sp_executesql N'ALTER TABLE User_Stage add [Error] NVARCHAR(2000) NULL'
   EXEC sp_executesql N'ALTER TABLE User_Stage add [IsActive] NCHAR(5)'
   EXEC sp_executesql N'UPDATE User_Stage set IsActive = ''False'''
+
+  RAISERROR('Adding Old_SF_User_ID__c column and setting it equal to Id.', 0, 1) WITH NOWAIT
+  EXEC sp_executeSQL N'ALTER TABLE User_Stage add [Old_SF_User_ID__c] NCHAR(18)'
+  EXEC sp_executesql N'UPDATE User_Stage SET Old_SF_User_ID__c = Id'
   
   RAISERROR ('Dropping unnecessary columns.', 0, 1) WITH NOWAIT
   EXEC sp_executeSQL N'ALTER TABLE User_Stage DROP COLUMN
@@ -121,12 +125,14 @@ AS
   RAISERROR ('Done.', 0, 1) WITH NOWAIT
 
   -- Insert new records and then update records, note that this will error
-  EXEC dbo.SF_BulkOps 'Insert', 'SFDC_Target', @stagingTable
-  EXEC dbo.SF_BulkOps @operation = 'Update', -- nvarchar(200)
-      @table_server = 'SFDC_Target', -- sysname
-      @table_name = @stagingTable, -- sysname
-      @opt_param1 = NULL, -- nvarchar(512)
-      @opt_param2 = NULL -- nvarchar(512)
+  -- EXEC dbo.SF_BulkOps 'Insert', 'SFDC_Target', @stagingTable
+  -- EXEC dbo.SF_BulkOps @operation = 'Update', -- nvarchar(200)
+  --     @table_server = 'SFDC_Target', -- sysname
+  --     @table_name = @stagingTable, -- sysname
+  --     @opt_param1 = NULL, -- nvarchar(512)
+  --     @opt_param2 = NULL -- nvarchar(512)
+
+  EXEC dbo.SF_BulkOps 'Upsert:IgnoreNulls', 'SFDC_Target', @stagingTable, 'Old_SF_User_ID__c'
   
 
 
