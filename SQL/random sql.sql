@@ -28,3 +28,6 @@ Bronto_Required_Fields__c_Stage.Name = Bronto_Required_Fields__c.Name
 SELECT * FROM Organization
 
 UPDATE Bronto
+
+SELECT * FROM CallCenter_Stage
+CANNOT_INSERT_UPDATE_ACTIVATE_ENTITY: entity type cannot be updated: Call Center
