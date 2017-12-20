@@ -15,7 +15,6 @@ AS
   --Dropping Staging table if table exists
   RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL DROP TABLE ' + @stagingTable
-  Print @SQL
   EXEC sp_executesql @SQL
 
   -- Replicating object table from source org
@@ -39,7 +38,20 @@ AS
     EXEC SF_REPLICATE 'SFDC_TARGET', 'Organization'
   END
   
-  IF @objectName != 'CallCenter'
+  -- Preparing data for insert or upsert, some custom settings have unique cases
+  IF @objectName = 'Process_Bypass_Admins__c'
+    BEGIN
+      RAISERROR('%s table unique case.', 0, 1, @stagingTable) WITH NOWAIT
+      SET @SQL = 'UPDATE ' + @stagingTable + ' SET SetupOwnerId = x.TargetID
+      FROM ProfileXRef x
+      WHERE x.SourceID = SetupOwnerID'
+      EXEC sp_executesql @SQL
+      SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
+      EXEC sp_executesql @SQL
+      SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
+      EXEC sp_executesql @SQL
+    END
+  ELSE IF @objectName != 'CallCenter'
     BEGIN
       RAISERROR('Setting SetupOwnerId to Organization.Id', 0, 1) WITH NOWAIT
       SET @SQL = 'UPDATE ' + @stagingTable + ' SET SetupOwnerId = Organization.Id FROM Organization'
@@ -64,22 +76,44 @@ AS
   -- Following @SQL checks if there is any data in object table replicated from source. If there is,
   -- then an upsert can be performed. Grabs ID from the _FromTarget table and puts ID in the ID column in
   -- the staging table. If no data currently exists in target org, then do an insert instead.
-  RAISERROR('Upserting table if we can. Otherwise, inserting.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'DECLARE @ret_code Int' +
-     char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
-     BEGIN
-      UPDATE ' + @stagingTable + ' SET ' + @stagingTable + '.Id = 
-       ' + @targetOrgTable + '.Id FROM ' + @stagingTable + ' INNER JOIN ' + @targetOrgTable +
-       char(10) + 'ON ' + @stagingTable + '.Name = ' + @targetOrgTable + '.Name' +
-       char(10) + 'EXEC dbo.SF_BulkOps ''Upsert'', ''SFDC_TARGET'', ''' + @stagingTable + ''', ''Id''' +
-     char(10) + 'END
-   ELSE
-    BEGIN' +
-      char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_BulkOps ''Insert'', ''SFDC_TARGET'', ''' + @stagingTable + '''' +
-      char(10) + 'IF ' + '@ret_code' + ' != 0' +
-        char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
-    END'
-  EXEC SP_ExecuteSQL @SQL
+
+  IF @objectName = 'Process_Bypass_Admins__c'
+    BEGIN
+      SET @SQL = 'DECLARE @ret_code Int' +
+        char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
+        BEGIN ' +
+          char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
+          char(10) + 'EXEC dbo.SF_BulkOps ''Upsert'', ''SFDC_TARGET'', ''' + @stagingTable + ''', ''Old_SF_ID__c''' +
+        char(10) + 'END
+      ELSE
+        BEGIN' +
+        char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
+          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_BulkOps ''Insert'', ''SFDC_TARGET'', ''' + @stagingTable + '''' +
+          char(10) + 'IF ' + '@ret_code' + ' != 0' +
+            char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
+        END'
+      EXEC SP_ExecuteSQL @SQL
+    END
+  ELSE
+    BEGIN
+      SET @SQL = 'DECLARE @ret_code Int' +
+        char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
+        BEGIN
+          UPDATE ' + @stagingTable + ' SET ' + @stagingTable + '.Id = 
+          ' + @targetOrgTable + '.Id FROM ' + @stagingTable + ' INNER JOIN ' + @targetOrgTable +
+          char(10) + 'ON ' + @stagingTable + '.Name = ' + @targetOrgTable + '.Name' +
+          char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
+          char(10) + 'EXEC dbo.SF_BulkOps ''Upsert'', ''SFDC_TARGET'', ''' + @stagingTable + ''', ''Id''' +
+        char(10) + 'END
+      ELSE
+        BEGIN' +
+        char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
+          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_BulkOps ''Insert'', ''SFDC_TARGET'', ''' + @stagingTable + '''' +
+          char(10) + 'IF ' + '@ret_code' + ' != 0' +
+            char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
+        END'
+      EXEC SP_ExecuteSQL @SQL
+    END
   -------------------------------------
   -- RAISERROR('Attempting to insert...', 0, 1) WITH NOWAIT
 	-- EXEC @ret_code = dbo.SF_BulkOps 'Insert', 'SFDC_TARGET', 'Bronto_Required_Fields__c_Stage'
