@@ -39,7 +39,7 @@ AS
   END
   
   -- Preparing data for insert or upsert, some custom settings have unique cases
-  IF @objectName = 'Process_Bypass_Admins__c'
+  IF @objectName = 'Process_Bypass_Admins__c' OR @objectName = 'Process_Bypass_Contact__c'
     BEGIN
       RAISERROR('%s table unique case.', 0, 1, @stagingTable) WITH NOWAIT
       SET @SQL = 'UPDATE ' + @stagingTable + ' SET SetupOwnerId = x.TargetID
@@ -77,7 +77,7 @@ AS
   -- then an upsert can be performed. Grabs ID from the _FromTarget table and puts ID in the ID column in
   -- the staging table. If no data currently exists in target org, then do an insert instead.
 
-  IF @objectName = 'Process_Bypass_Admins__c'
+  IF @objectName = 'Process_Bypass_Admins__c' OR @objectName = 'Process_Bypass_Contact__c'
     BEGIN
       SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')

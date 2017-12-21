@@ -18,6 +18,8 @@ EXEC Insert_CustomSettings 'Process_Bypass_Admins__c'
   -- add external id of old id value to Process_Bypass_Admins__c
 EXEC Insert_CustomSettings 'Process_Bypass_Case__c'
 EXEC Insert_CustomSettings 'Process_Bypass_Contact__c'
+  -- Setup owner ID are profiles
+  -- add external id of old id
 EXEC Insert_CustomSettings 'SaleTaskGeneration__c'
 EXEC Insert_CustomSettings 'SubsReqs__c'
 EXEC Insert_CustomSettings 'TestSkipping__c'
@@ -25,3 +27,6 @@ EXEC Insert_CustomSettings 'TPSTriggerMapping__c'
 EXEC Insert_CustomSettings 'Trigger_Bypass__c'
 EXEC Insert_CustomSettings 'Warranty_Division_Filter__c'
 EXEC Insert_CustomSettings 'Warranty_Vendor_Lookup__c'
+
+-- spot for inserting Area_Plan_Master_Link - have to revisit to add related list of community plan plaster which has community
+EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
