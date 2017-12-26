@@ -39,6 +39,10 @@ AS
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
   EXEC sp_executesql @SQL
+  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
+  EXEC sp_executesql @SQL
 
   -- Dropping object table from source if already have it
   RAISERROR('Dropping %s_FromTarget table if have it.', 0, 1, @objectName) WITH NOWAIT
@@ -67,7 +71,9 @@ AS
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
         BEGIN' +
           char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC dbo.SF_BulkOps ''Upsert'', ''SFDC_TARGET'', ''' + @stagingTable + ''', '' jdeKey__c''' +
+          char(10) + 'EXEC @ret_code = SF_BulkOps ''Upsert'', ''SFDC_Target'', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
+          char(10) + 'IF @ret_code != 0' +
+          char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
         char(10) + 'END
       ELSE
         BEGIN' +
