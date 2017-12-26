@@ -4,6 +4,8 @@ Metadata moved:
 - User
 - Custom Settings
 - Area_Plan_Master_Link__c
+- CastIronLastRunTime__c
+- Cost_Code__c
 
 Data Moved (Integrate Org):
 - Profile
@@ -11,3 +13,5 @@ Data Moved (Integrate Org):
 - Users
 - Custom Settings
 - Area_Plan_Master_Link__c
+- CastIronLastRunTime__c
+- Cost_Code__c

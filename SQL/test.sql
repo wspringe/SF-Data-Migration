@@ -30,3 +30,7 @@ EXEC Insert_CustomSettings 'Warranty_Vendor_Lookup__c'
 
 -- spot for inserting Area_Plan_Master_Link - have to revisit to add related list of community plan plaster which has community
 EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
+EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'
+-- DELETE TOP (10) FROM CastIronLastRunTime__c_FromTarget
+-- ALTER TABLE CastIronLastRunTime__c_FromTarget add [Error] NVARCHAR(2000) NULL
+-- EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'CastIronLastRunTime__c_FromTarget'
