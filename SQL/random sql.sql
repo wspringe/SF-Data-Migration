@@ -80,3 +80,5 @@ EXEC SF_BulkOps 'insert', 'SFDC_TARGET', 'Process_Bypass_Admins__c'
 EXEC SF_BulkOps 'Upsert', 'SFDC_TARGET', 'Process_Bypass_Admins__c', 'Old_SF_ID__c'
 
   -- add external id of old id value to Process_Bypass_Admins__c
+  EXEC SF_Replicate 'SALESFORCE', 'Design_Center__c'
+  SELECT * FROM Design_Center__c
