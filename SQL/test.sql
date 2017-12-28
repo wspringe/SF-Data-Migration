@@ -33,12 +33,15 @@ EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
 EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'
 -- DELETE TOP (10) FROM CastIronLastRunTime__c_FromTarget
 BEGIN
-EXEC SF_Replicate 'SFDC_Target', 'Employee__c'
-ALTER TABLE Employee__c add [Error] NVARCHAR(2000) NULL
-EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Employee__c'
+EXEC SF_Replicate 'SFDC_Target', 'Freeway__c'
+ALTER TABLE Freeway__c add [Error] NVARCHAR(2000) NULL
+EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Freeway__c'
 END
-DROP TABLE Employee__c
+DROP TABLE Freeway__c
 EXEC Insert_CostCode 'Cost_Code__c'
 EXEC Insert_DesignCenter 'Design_Center__c'
 EXEC Insert_E1LegalCodes 'E1_Legal_Codes__c'
 EXEC Insert_Employee 'Employee__c'
+EXEC Insert_Feature 'Feature__c'
+EXEC Insert_Freeway 'Freeway__c'
+EXEC Insert_GiftCardTracking 'Gift_Card_Tracking__c'

@@ -9,6 +9,9 @@ Metadata moved:
 - Design_Center__c
 - E1_Legal_Codes__c
 - Employee__c
+- Feature__c
+- Freeway__c
+- Gift_Card_Tracking__C
 
 Data Moved (Integrate Org):
 - Profile
@@ -21,3 +24,6 @@ Data Moved (Integrate Org):
 - Design_Center__c
 - E1_Legal_Codes__c
 - Employee__c
+- Feature__c
+- Freeway__c
+- Gift_Card_Tracking__C
