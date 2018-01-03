@@ -28,7 +28,7 @@ EXEC Insert_CustomSettings 'Trigger_Bypass__c'
 EXEC Insert_CustomSettings 'Warranty_Division_Filter__c'
 EXEC Insert_CustomSettings 'Warranty_Vendor_Lookup__c'
 
--- spot for inserting Area_Plan_Master_Link - have to revisit to add related list of community plan plaster which has community
+-- spot for inserting Area_Plan_Master_Link - have to revisit to add related list of community plan master which has community
 EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
 EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'
 -- DELETE TOP (10) FROM CastIronLastRunTime__c_FromTarget
@@ -47,3 +47,6 @@ EXEC Insert_Freeway 'Freeway__c'
 EXEC Insert_GiftCardTracking 'Gift_Card_Tracking__c'
 EXEC Insert_LoanType 'Loan_Type__c'
 EXEC Insert_MarketingIntegrationNextNumber 'Marketing_Integration_Next_Number__c'
+EXEC Insert_MHDCIntegration 'MHDC_Integration__c'
+-- NOTE TURN OFF URL VALIDATION RULE BEFORE MIGRATING, THEN TURN BACK ON
+EXEC Insert_NearbyLocation 'Nearby_Location__c'
