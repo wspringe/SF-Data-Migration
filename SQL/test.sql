@@ -32,12 +32,12 @@ EXEC Insert_CustomSettings 'Warranty_Vendor_Lookup__c'
 EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
 EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'
 -- DELETE TOP (10) FROM CastIronLastRunTime__c_FromTarget
-BEGIN
-EXEC SF_Replicate 'SFDC_Target', 'Freeway__c'
-ALTER TABLE Freeway__c add [Error] NVARCHAR(2000) NULL
-EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Freeway__c'
-END
-DROP TABLE Freeway__c
+-- BEGIN
+-- EXEC SF_Replicate 'SFDC_Target', 'Region__c'
+-- ALTER TABLE Region__c add [Error] NVARCHAR(2000) NULL
+-- EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Region__c'
+-- END
+-- DROP TABLE region__c
 EXEC Insert_CostCode 'Cost_Code__c'
 EXEC Insert_DesignCenter 'Design_Center__c'
 EXEC Insert_E1LegalCodes 'E1_Legal_Codes__c'
@@ -47,6 +47,8 @@ EXEC Insert_Freeway 'Freeway__c'
 EXEC Insert_GiftCardTracking 'Gift_Card_Tracking__c'
 EXEC Insert_LoanType 'Loan_Type__c'
 EXEC Insert_MarketingIntegrationNextNumber 'Marketing_Integration_Next_Number__c'
-EXEC Insert_MHDCIntegration 'MHDC_Integration__c'
--- NOTE TURN OFF URL VALIDATION RULE BEFORE MIGRATING, THEN TURN BACK ON
-EXEC Insert_NearbyLocation 'Nearby_Location__c'
+EXEC Insert_MHDCIntegration 'MHDC_Integration__c' -- over 300k records
+EXEC Insert_NearbyLocation 'Nearby_Location__c'-- NOTE TURN OFF URL VALIDATION RULE BEFORE MIGRATING, THEN TURN BACK ON
+EXEC Insert_Option 'Option__c' -- over 3 million records
+EXEC Insert_PublicTransportation 'Public_Transportation__c'
+EXEC Insert_Region 'Region__c'
