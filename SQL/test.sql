@@ -53,3 +53,5 @@ EXEC Insert_Option 'Option__c' -- over 3 million records
 EXEC Insert_PublicTransportation 'Public_Transportation__c'
 EXEC Insert_Region 'Region__c'
 EXEC Insert_SolarAddendum 'Solar_Addendum__c'
+EXEC Insert_SolarAddendumDetail 'Solar_Addedum_Detail__c' -- Misspelled object name
+EXEC Insert_UserDefinedCodeTypes 'User_Defined_Code_Types__c'
