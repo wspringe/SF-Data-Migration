@@ -52,3 +52,4 @@ EXEC Insert_NearbyLocation 'Nearby_Location__c'-- NOTE TURN OFF URL VALIDATION R
 EXEC Insert_Option 'Option__c' -- over 3 million records
 EXEC Insert_PublicTransportation 'Public_Transportation__c'
 EXEC Insert_Region 'Region__c'
+EXEC Insert_SolarAddendum 'Solar_Addendum__c'
