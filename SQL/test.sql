@@ -55,3 +55,6 @@ EXEC Insert_Region 'Region__c'
 EXEC Insert_SolarAddendum 'Solar_Addendum__c'
 EXEC Insert_SolarAddendumDetail 'Solar_Addedum_Detail__c' -- Misspelled object name
 EXEC Insert_UserDefinedCodeTypes 'User_Defined_Code_Types__c'
+EXEC Insert_Division 'Division__c' -- loop back to update Design_center__c and title_company__c with accounts once accounts is done
+EXEC Insert_Accounts 'Account'
+EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Account'
