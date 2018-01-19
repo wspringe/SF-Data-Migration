@@ -33,11 +33,11 @@ EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
 EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'
 -- DELETE TOP (10) FROM CastIronLastRunTime__c_FromTarget
 -- BEGIN
--- EXEC SF_Replicate 'SFDC_Target', 'Region__c'
--- ALTER TABLE Region__c add [Error] NVARCHAR(2000) NULL
--- EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Region__c'
+-- EXEC SF_Replicate 'SFDC_Target', 'Marketing_Area__c'
+-- ALTER TABLE Marketing_Area__c add [Error] NVARCHAR(2000) NULL
+-- EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Marketing_Area__c'
 -- END
--- DROP TABLE region__c
+-- DROP TABLE Marketing_Area__c
 EXEC Insert_CostCode 'Cost_Code__c'
 EXEC Insert_DesignCenter 'Design_Center__c'
 EXEC Insert_E1LegalCodes 'E1_Legal_Codes__c'
@@ -57,4 +57,5 @@ EXEC Insert_SolarAddendumDetail 'Solar_Addedum_Detail__c' -- Misspelled object n
 EXEC Insert_UserDefinedCodeTypes 'User_Defined_Code_Types__c'
 EXEC Insert_Division 'Division__c' -- loop back to update Design_center__c and title_company__c with accounts once accounts is done
 EXEC Insert_Accounts 'Account'
-EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Account'
+EXEC Insert_MarketingArea 'Marketing_Area__c'
+EXEC Insert_Contacts 'Contact'
