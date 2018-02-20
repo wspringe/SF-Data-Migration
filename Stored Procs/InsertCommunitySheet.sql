@@ -4,17 +4,17 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Insert_MHDCIntegration] (
+CREATE PROCEDURE [dbo].[Insert_CommunitySheet] (
   @objectName VARCHAR(50)
 
   /*
-    This stored procedure is used for inserting and upserting data for the MHDC_Integration object. Note that replcaed OwnerID with ID for SF Admin b/c it doesn't matter and cross-ref table was trying to insert NULL values?
+    This stored procedure is used for inserting and upserting data for the Marketing Area object.
 
-    Circular definition fields: None.
+    Circular definition fields: None
 
-    Need: 
+    Need: None
 
-    Cross-Reference: Owner
+    Cross-Reference: OWner, Division
 */
 )
 AS
@@ -37,8 +37,8 @@ AS
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
-  -- EXEC sp_executesql @SQL
+  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
+  EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
@@ -62,14 +62,20 @@ AS
    -- Update stage table with new UserIds for Owner'
   RAISERROR('Replacing Owner with User IDs from target org...', 0, 1) WITH NOWAIT
   SET @SQL = 'update ' + @stagingTable +
-  ' set OwnerId = ''0054D000000EC1ZQAW'''
+  ' set OwnerId = x.TargetID
+  FROM UserXRef x 
+  WHERE x.SourceID = ' + @stagingTable + '.OwnerId'
   EXEC sp_executeSQL @SQL
+
+  EXEC Create_Cross_Reference_Table 'Division__c', 'Name'
+
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXRef', 'Division__c'
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
         BEGIN' +
           char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''SFDC_Target'', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
+          char(10) + 'EXEC @ret_code = SF_BulkOps ''Upsert'', ''SFDC_Target'', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
           char(10) + 'IF @ret_code != 0' +
           char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
         char(10) + 'END

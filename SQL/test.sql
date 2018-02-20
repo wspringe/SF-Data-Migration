@@ -34,7 +34,7 @@ EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'
 -- DELETE TOP (10) FROM CastIronLastRunTime__c_FromTarget
 -- BEGIN
 -- EXEC SF_Replicate 'SFDC_Target', 'Marketing_Area__c'
--- ALTER TABLE Marketing_Area__c add [Error] NVARCHAR(2000) NULL
+ALTER TABLE MHDC_Integration__c_Stage add [Error] NVARCHAR(2000) NULL
 -- EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Marketing_Area__c'
 -- END
 -- DROP TABLE Marketing_Area__c
@@ -48,6 +48,7 @@ EXEC Insert_GiftCardTracking 'Gift_Card_Tracking__c'
 EXEC Insert_LoanType 'Loan_Type__c'
 EXEC Insert_MarketingIntegrationNextNumber 'Marketing_Integration_Next_Number__c'
 EXEC Insert_MHDCIntegration 'MHDC_Integration__c' -- over 300k records
+EXEC SF_BulkOps 'Upsert', 'SFDC_Target', 'MHDC_Integration__c_Stage', 'Old_SF_ID__c'
 EXEC Insert_NearbyLocation 'Nearby_Location__c'-- NOTE TURN OFF URL VALIDATION RULE BEFORE MIGRATING, THEN TURN BACK ON
 EXEC Insert_Option 'Option__c' -- over 3 million records
 EXEC Insert_PublicTransportation 'Public_Transportation__c'
