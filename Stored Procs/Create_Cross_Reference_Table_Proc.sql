@@ -7,7 +7,9 @@ SET QUOTED_IDENTIFIER ON
 GO
 ALTER PROCEDURE [dbo].[Create_Cross_Reference_Table] (
   @objectName VARCHAR(50),
-  @uniqueIdentifier VARCHAR (50)
+  @uniqueIdentifier VARCHAR (50),
+  @targetLinkedServerName VARCHAR(50),
+  @sourceLinkedServerName VARCHAR(50)
 
   /*
     This stored procedure is used to create a cross-reference table based on the object name
@@ -36,7 +38,7 @@ AS
                  WHERE TABLE_NAME = @objSource)
   BEGIN
 	  RAISERROR ( 'Retrieving table %s from source SF org...', 0, 1, @objectName) WITH NOWAIT
-	  EXEC SF_Replicate 'SALESFORCE', @objectName
+	  EXEC SF_Replicate @sourceLinkedServerName, @objectName
 	  EXEC sp_rename @objectName, @objSource
 	  RAISERROR ( 'Done.', 0, 1) WITH NOWAIT
   END
@@ -61,7 +63,7 @@ AS
 				 WHERE TABLE_NAME = @objTarget)
   BEGIN
 	  RAISERROR ( 'Retrieving %s table from target SF org...', 0, 1, @objectName) WITH NOWAIT
-	  EXEC SF_Replicate 'SFDC_TARGET', @objectName
+	  EXEC SF_Replicate @targetLinkedServerName, @objectName
 	  EXEC sp_rename @objectName, @objTarget
 	  RAISERROR ( 'Done.', 0, 1) WITH NOWAIT
   END

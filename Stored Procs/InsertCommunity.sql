@@ -4,19 +4,19 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Insert_Region] (
+ALTER PROCEDURE [dbo].[Insert_Community] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
 
   /*
-    This stored procedure is used for inserting and upserting data for the Region object.
+    This stored procedure is used for inserting and upserting data for the Marketing Area object.
 
-    Circular definition fields: None.
+    Circular definition fields: Community_Sheet
 
     Need: None
 
-    Cross-Reference: Owner
+    Cross-Reference: OWner, Division
 */
 )
 AS
@@ -38,7 +38,7 @@ AS
   RAISERROR ('Done', 0, 1) WITH NOWAIT
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
-  RAISERROR ('Creating Old SF ID column.', 0, 1) WITH NOWAIT
+  RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
   EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
@@ -55,19 +55,36 @@ AS
              + char(10) + 'END'
   EXEC sp_executesql @SQL
 
-  -- EXEC Create_Cross_Reference_Table 'User', 'Username'
-
-   -- Update stage table with new UserIds for Owner'
-  -- RAISERROR('Replacing Owner with User IDs from target org...', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'update ' + @stagingTable +
-  -- ' set OwnerId = x.TargetID
-  -- FROM UserXRef x 
-  -- WHERE x.SourceID = ' + @stagingTable + '.OwnerId'
-  -- EXEC sp_executeSQL @SQL
-
-  RAISERROR('Putting Wesley as Owner of records.', 0 ,1) WITH NOWAIT
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET OwnerID = ''0051F000000ehMmQAI'''
+  RAISERROR('Setting columns to NULL that cannot be used yet.', 0, 1)
+  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Master_Community_Sheet__c = '''''
   EXEC sp_executesql @SQL
+
+  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
+  SET @SQL = 'UPDATE ' + @stagingTable + ' SET DocuSign_Carbon_Copy_1__c = '''', DocuSign_Carbon_Copy_2__c = '''',
+  Escrow_Coordinator__c = '''', Preferred_Lender__c = '''''
+  EXEC sp_executesql @SQL
+  ----------------------------------------------------------------------------
+
+  --------------- COMMENTED OUT THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
+  --EXEC Create_Cross_Reference_Table 'User', 'Username'
+  ------------------------------------------------------------------------------------
+  RAISERROR('Creating XRef table for REgion', 0 ,1) WITH NOWAIT
+  EXEC Create_Cross_Reference_Table 'Division__c', 'Name', 'SALESFORCE_QA', 'SALESFORCE'
+  EXEC Create_Cross_Reference_Table 'Community_Sheet__c', 'Name', 'SALESFORCE_QA', 'SALESFORCE'
+
+
+  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
+  RAISERROR('Replacing User lookups with User IDs from target org...', 0, 1) WITH NOWAIT
+  SET @SQL = 'update ' + @stagingTable +
+  ' set OwnerID = ''0051F000000ehMmQAI'''
+  EXEC sp_executeSQL @SQL
+  ------------------------------------------------------------------------------------
+
+  -- Update stage table with new Ids for Region lookup
+  RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
+
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
