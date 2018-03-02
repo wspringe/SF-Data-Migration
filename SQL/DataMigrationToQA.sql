@@ -5,3 +5,6 @@ EXEC Insert_Division 'Division__c', 'SALESFORCE_QA', 'SALESFORCE' --DONE
 DROP TABLE Division__c_Target
 EXEC Insert_CommunitySheet 'Community_Sheet__c', 'SALESFORCE_QA', 'SALESFORCE' -- DONE
 EXEC Insert_Community 'Community__c', 'SALESFORCE_QA', 'SALESFORCE' -- DONE
+EXEC Insert_Plan 'Plan__c', 'SALESFORCE_QA', 'SALESFORCE' -- DONE
+EXEC Insert_Lot 'Lot__c', 'SALESFORCE_QA', 'SALESFORCE' -- blocked due to QA envioronment data storage limits
+SELECT * FROM Lot__c_Stage_result WHERE Error != 'Operation Successful.'
