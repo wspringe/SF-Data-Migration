@@ -50,6 +50,7 @@ AS
   SET @SQL = 'UPDATE ' + @stagingTable + ' SET Approver_2__c = '''', Approver_3__c = '''', Approver_4__c = '''', Approver_5__c = '''',
               Inventory_Designer__c = '''''
   EXEC sp_executesql @SQL
+  SET @SQL = 'DELETE FROM ' + @stagingTable + ' WHERE Status__c != ''Available'''
   ----------------------------------------------------------------------------
 
    --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------

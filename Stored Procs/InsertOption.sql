@@ -5,7 +5,9 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 ALTER PROCEDURE [dbo].[Insert_Option] (
-  @objectName VARCHAR(50)
+  @objectName VARCHAR(50),
+  @targetLinkedServerName VARCHAR(50),
+  @sourceLinkedServerName VARCHAR(50)
 
   /*
     This stored procedure is used for inserting and upserting data for the Option object.
@@ -30,7 +32,7 @@ AS
   EXEC sp_executesql @SQL
   
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_Replicate 'SALESFORCE', @objectName
+  EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
     print 'Error replicating ' + @objectName
   RAISERROR ('Done', 0, 1) WITH NOWAIT
@@ -39,44 +41,53 @@ AS
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
   EXEC sp_executesql @SQL
-  -- SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
-  -- EXEC sp_executesql @SQL
-  -- SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
-  -- EXEC sp_executesql @SQL
-
-  -- Dropping object table from source if already have it
-  RAISERROR('Dropping %s_FromTarget table if have it.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NOT NULL'
-             + char(10) + 'DROP TABLE ' + @targetOrgTable
+  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
 
-  -- Replicating object table from target
-  RAISERROR('Replicating %s table from target org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_REPLICATE 'SFDC_TARGET', @objectName
-  -- Rename table to add _FromTarget
-  EXEC sp_rename @objectName, @targetOrgTable
-  RAISERROR('Done.', 0, 1) WITH NOWAIT
-
-  EXEC Create_Cross_Reference_Table 'User', 'Username'
-
-   -- Update stage table with new UserIds for Owner'
-  RAISERROR('Replacing Owner with User IDs from target org...', 0, 1) WITH NOWAIT
-  SET @SQL = 'update ' + @stagingTable +
-  ' set OwnerId = ''0054D000000EC1ZQAW'''
+  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
+  SET @SQL = 'DELETE FROM ' + @stagingTable + ' WHERE Status__c != ''Active'''
   EXEC sp_executeSQL @SQL
+  ----------------------------------------------------------------------------
+
+   --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
+  RAISERROR('Replacing User lookups with my ID', 0, 1) WITH NOWAIT
+  SET @SQL = 'update ' + @stagingTable +
+  ' set OwnerId = ''0051F000000ehMmQAI'''
+  EXEC sp_executeSQL @SQL
+  ------------------------------------------------------------------------------------
+
+  -- Dropping object table from source if already have it
+  RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
+  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NULL'
+             + char(10) + 'BEGIN'
+             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''''
+             + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
+             + char(10) + 'END'
+  EXEC sp_executesql @SQL
+
+  --------------------- COMMENTED OUT FOR DM TO QA --------------------------------
+  -- RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
+  -- EXEC Create_Cross_Reference_Table 'User', 'Username', 'SFDC_Target', 'SALESFORCE'
+
+  -- -- Update stage table with new Ids for Region lookup
+  -- RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
+  -- EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
+  ---------------------------------------------------------------------------------
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
         BEGIN' +
           char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC @ret_code = SF_BulkOps ''Upsert'', ''SFDC_Target'', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
+          char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
           char(10) + 'IF @ret_code != 0' +
           char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
         char(10) + 'END
       ELSE
         BEGIN' +
         char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_BulkOps ''Insert'', ''SFDC_TARGET'', ''' + @stagingTable + '''' +
+          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_TableLoader ''Insert'', ''' + @targetLinkedServerName +''', ''' + @stagingTable + '''' +
           char(10) + 'IF ' + '@ret_code' + ' != 0' +
             char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
         END'

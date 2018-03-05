@@ -63,6 +63,8 @@ AS
   SET @SQL = 'UPDATE ' + @stagingTable + ' SET DocuSign_Carbon_Copy_1__c = '''', DocuSign_Carbon_Copy_2__c = '''',
   Escrow_Coordinator__c = '''', Preferred_Lender__c = '''''
   EXEC sp_executesql @SQL
+  SET @SQL = 'DELETE FROM ' + @stagingTable + ' WHERE Status__c != ''Active'''
+  EXEC sp_executesql @SQL
   ----------------------------------------------------------------------------
 
   --------------- COMMENTED OUT THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
