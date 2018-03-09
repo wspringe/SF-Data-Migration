@@ -31,13 +31,6 @@ EXEC Insert_CustomSettings 'Warranty_Vendor_Lookup__c'
 -- spot for inserting Area_Plan_Master_Link - have to revisit to add related list of community plan master which has community
 EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
 EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'
--- DELETE TOP (10) FROM CastIronLastRunTime__c_FromTarget
--- BEGIN
--- EXEC SF_Replicate 'SFDC_Target', 'Marketing_Area__c'
-ALTER TABLE MHDC_Integration__c_Stage add [Error] NVARCHAR(2000) NULL
--- EXEC SF_BulkOps 'Delete', 'SFDC_Target', 'Marketing_Area__c'
--- END
--- DROP TABLE Marketing_Area__c
 EXEC Insert_CostCode 'Cost_Code__c'
 EXEC Insert_DesignCenter 'Design_Center__c'
 EXEC Insert_E1LegalCodes 'E1_Legal_Codes__c'
@@ -48,7 +41,6 @@ EXEC Insert_GiftCardTracking 'Gift_Card_Tracking__c'
 EXEC Insert_LoanType 'Loan_Type__c'
 EXEC Insert_MarketingIntegrationNextNumber 'Marketing_Integration_Next_Number__c'
 EXEC Insert_MHDCIntegration 'MHDC_Integration__c' -- over 300k records
-EXEC SF_BulkOps 'Upsert', 'SFDC_Target', 'MHDC_Integration__c_Stage', 'Old_SF_ID__c'
 EXEC Insert_NearbyLocation 'Nearby_Location__c'-- NOTE TURN OFF URL VALIDATION RULE BEFORE MIGRATING, THEN TURN BACK ON
 EXEC Insert_Option 'Option__c' -- over 3 million records
 EXEC Insert_PublicTransportation 'Public_Transportation__c'
@@ -57,6 +49,46 @@ EXEC Insert_SolarAddendum 'Solar_Addendum__c'
 EXEC Insert_SolarAddendumDetail 'Solar_Addedum_Detail__c' -- Misspelled object name
 EXEC Insert_UserDefinedCodeTypes 'User_Defined_Code_Types__c'
 EXEC Insert_Division 'Division__c' -- loop back to update Design_center__c and title_company__c with accounts once accounts is done
-EXEC Insert_Accounts 'Account'
+EXEC Insert_Accounts 'Account', 'SFDC_Target', 'SALESFORCE' -- wprk on this
 EXEC Insert_MarketingArea 'Marketing_Area__c'
-EXEC Insert_Contacts 'Contact'
+EXEC Insert_Contacts 'Contact', 'SFDC_Target', 'SALESFORCE' -- work on this
+EXEC Insert_SunPowerRecord 'Sun_Power_record__c', 'SFDC_Target', 'Salesforce' -- look at this when get more than 3GB of fucking RAM
+
+
+
+
+
+
+
+ ----------------------------------- TESTING AREA  -----------------------------------
+IF (SELECT IsPersonAccount FROM Contact_Stage) = 'True'
+print('hello')
+
+UPDATE Contact_Stage
+SET RecordTypeId = '0124D0000008nOYQAY'
+WHERE IsPersonAccount = 'true' OR RecordTypeID IS NULL
+
+
+EXEC SF_Tableloader 'Upsert', 'SFDC_Target', 'Contact_Stage', 'Old_SF_ID__c'
+
+-- following takes 15 minutes to complete on 1,000,000 rows
+DECLARE @SQL NVARCHAR(1000)
+DECLARE @i INT = 0
+WHILE @i < 10
+BEGIN
+    SET @SQL = 'SELECT * 
+    INTO Contact_Stage_Split' + CAST(@i AS NVARCHAR(2)) + '
+    FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY Id) AS rn FROM Contact_Stage) T1
+    WHERE rn % 5 = ' + CAST(@i AS NVARCHAR(2))
+    SET @i = @i + 1
+    EXEC sp_executeSQL @SQL
+END
+
+DECLARE @SQL NVARCHAR(1000)
+DECLARE @i INT = 0
+WHILE @i < 10
+BEGIN
+    SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''SFDC_Target'', ''Contact_Stage_Split' + CAST(@i AS NVARCHAR(2)) + ''', ''Old_SF_ID__C'''
+    SET @i = @i + 1
+    EXEC sp_executeSQL @SQL
+END

@@ -5,7 +5,9 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 ALTER PROCEDURE [dbo].[Insert_Contacts] (
-  @objectName VARCHAR(50)
+  @objectName VARCHAR(50),
+  @targetLinkedServerName VARCHAR(50),
+  @sourceLinkedServerName VARCHAR(50)
 
   /*
     This stored procedure is used for inserting and upserting data for the Contacts object.
@@ -23,17 +25,17 @@ AS
   SET @stagingTable = @objectName + '_Stage' 
   SET @targetOrgTable = @objectName + '_FromTarget'
   
-  -- RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
-  -- -- Dropping table if table exists
-  -- SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
-  --   DROP TABLE ' + @stagingTable
-  -- EXEC sp_executesql @SQL
+  RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
+  -- Dropping table if table exists
+  SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
+    DROP TABLE ' + @stagingTable
+  EXEC sp_executesql @SQL
   
-  -- RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
-  -- EXEC SF_Replicate 'SALESFORCE', @objectName
-  -- IF @@Error != 0
-  --   print 'Error replicating ' + @objectName
-  -- RAISERROR ('Done', 0, 1) WITH NOWAIT
+  RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
+  EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
+  IF @@Error != 0
+    print 'Error replicating ' + @objectName
+  RAISERROR ('Done', 0, 1) WITH NOWAIT
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
@@ -58,18 +60,16 @@ AS
   RAISERROR('Done.', 0, 1) WITH NOWAIT
 
   RAISERROR('Setting columns to NULL that cannot be used yet.', 0, 1)
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET ReportsTo = '''''
+  SET @SQL = 'UPDATE ' + @stagingTable + ' SET ReportsToId = '''''
   EXEC sp_executesql @SQL
 
-  EXEC Create_Cross_Reference_Table 'Marketing_Area__c', 'Name'
-  EXEC Create_Cross_Reference_Table 'Account', 'Name' 
-  EXEC Create_Cross_Reference_Table 'User', 'Username'
-  EXEC Create_Cross_Reference_Table 'Division__c', 'Name'
+  EXEC Create_Cross_Reference_Table 'Marketing_Area__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'Account', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Contact'
 
 
    -- Update stage table with new UserIds for Owner'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXRef', 'Division__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXRef', 'OwnerId'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactRecordTypeXRef', 'RecordTypeId'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXRef', 'AccountId'
@@ -93,6 +93,6 @@ AS
           char(10) + 'IF ' + '@ret_code' + ' != 0' +
             char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
         END'
-  EXEC SP_ExecuteSQL @SQL
+  --EXEC SP_ExecuteSQL @SQL
 
   GO
