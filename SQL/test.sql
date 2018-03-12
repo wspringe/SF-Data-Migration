@@ -53,6 +53,17 @@ EXEC Insert_Accounts 'Account', 'SFDC_Target', 'SALESFORCE' -- wprk on this
 EXEC Insert_MarketingArea 'Marketing_Area__c'
 EXEC Insert_Contacts 'Contact', 'SFDC_Target', 'SALESFORCE' -- work on this
 EXEC Insert_SunPowerRecord 'Sun_Power_record__c', 'SFDC_Target', 'Salesforce' -- look at this when get more than 3GB of fucking RAM
+EXEC Insert_BrontoMessages 'Bronto_Messages__c', 'SFDC_Target', 'Salesforce' -- not tested yet, add only records from 2018
+EXEC Insert_ApprovalActor 'Approval_Actor__c', 'SFDC_Target', 'Salesforce' -- not tested yet
+EXEC Insert_BrontoDeliveries 'Bronto_Deliveries__c', 'SFDC_Target', 'Salesforce' -- not tested yet
+EXEC Insert_BrontoCampaignResponse 'Bronto_Campaign_Response__c', 'SFDC_Target', 'SALESFORCE' -- not tested yet, will take a while cuz over 17 mill records
+EXEC Insert_CampaignTracker 'Campaign_Tracker__c', 'SFDC_Target', 'SALESFORCE' -- not tested yet
+EXEC Insert_CampaignTrackerMediaSource 'Campaign_Tracker_Media_Source__c', 'SFDC_Target', 'SALESFORCE' --not tested yet
+EXEC Insert_Communitysheet 'Community_Sheet__c', 'SFDC_Target', 'SALESFORCE' -- not tested yet
+EXEC Insert_CommunitySheet_FollowUp 'Community_Sheet__c', 'Name', 'Master_Community_Sheet__c', 'SFDC_Target', 'Salesforce' -- not tested yet
+EXEC Insert_Community 'Community__c', 'SFDC_Target', 'Salesforce' -- not edited yet, need to think of way to create xref of accounts and contacts... prob compared old_sf_id to id
+
+
 
 
 
@@ -92,3 +103,13 @@ BEGIN
     SET @i = @i + 1
     EXEC sp_executeSQL @SQL
 END
+
+ALTER TABLE Account_Stage DROP COLUMN Sort
+
+SELECT rn = Row_Number() OVER (Order by Id), * INTO Bronto_Campaign_Response__c_Stage FROM Bronto_Campaign_Response__c --takes 24 min
+SELECT * FROM Bronto_Campaign_Response__c_Stage
+SELECT MAX(Rownum) FROM Account_Stage
+SELECT ROW FROM Account_Stage
+ALTER TABLE Bronto_Campaign_Response__c ADD [Sort] INT IDENTITY (1,1)
+
+EXEC SF_Replicate 'SALESFORCE', 'Bronto_Campaign_Response__c', 'pkchunk'

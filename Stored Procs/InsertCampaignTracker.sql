@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_BrontoMessages] (
+CREATE PROCEDURE [dbo].[Insert_CampaignTracker] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -62,8 +62,8 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cxRef', 'Division__c'
 
   -- Basically adding rowcount to keep track of number of records in a table
-  SET @SQL = 'ALTER TABLE '+ @stagingTable +' ADD [Sort] INT IDENTITY (1,1)'
-  EXEC SP_EXECUTESQL @SQL
+  -- SET @SQL = 'ALTER TABLE '+ @stagingTable +' ADD [Sort] INT IDENTITY (1,1)'
+  -- EXEC SP_EXECUTESQL @SQL
 
   -- Drop all tables with staging table name + split
   -- SELECT 'IF OBJECT_ID(''' + TABLE_NAME + ''') IS NOT NULL BEGIN DROP TABLE [' + TABLE_NAME + '] END;' 
@@ -91,7 +91,7 @@ AS
   --   EXEC sp_executeSQL @sql
   -- END
 
-  -- -- Upserting the split tables
+  -- Upserting the split tables
   -- SET @i = 0
   -- WHILE @i < @count
   -- BEGIN

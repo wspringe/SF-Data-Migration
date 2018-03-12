@@ -39,8 +39,6 @@ AS
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
-  EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
@@ -59,27 +57,16 @@ AS
   SET @SQL = 'UPDATE ' + @stagingTable + ' SET Master_Community_Sheet__c = '''''
   EXEC sp_executesql @SQL
 
-  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Design_Center__c = '''''
-  EXEC sp_executesql @SQL
-  ----------------------------------------------------------------------------
-
-  --------------- COMMENTED OUT THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  --EXEC Create_Cross_Reference_Table 'User', 'Username'
-  ------------------------------------------------------------------------------------
-  RAISERROR('Creating XRef table for REgion', 0 ,1) WITH NOWAIT
-  EXEC Create_Cross_Reference_Table 'Division__c', 'Name', 'SALESFORCE_QA', 'SALESFORCE'
-
-  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  RAISERROR('Replacing User lookups with User IDs from target org...', 0, 1) WITH NOWAIT
-  SET @SQL = 'update ' + @stagingTable +
-  ' set OwnerID = ''0051F000000ehMmQAI'''
-  EXEC sp_executeSQL @SQL
-  ------------------------------------------------------------------------------------
+  RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
+  EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'Design_Center__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
 
   -- Update stage table with new Ids for Region lookup
-  RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
+  RAISERROR('Replacing fields from target org...', 0, 1) WITH NOWAIT
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Design_Center__cXref', 'Design_center__c'
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')

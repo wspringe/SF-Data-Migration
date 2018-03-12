@@ -55,24 +55,12 @@ AS
              + char(10) + 'END'
   EXEC sp_executesql @SQL
 
-  RAISERROR('Setting columns to NULL that cannot be used yet.', 0, 1)
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Master_Community_Sheet__c = '''''
-  EXEC sp_executesql @SQL
-
-  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET DocuSign_Carbon_Copy_1__c = '''', DocuSign_Carbon_Copy_2__c = '''',
-  Escrow_Coordinator__c = '''', Preferred_Lender__c = '''''
-  EXEC sp_executesql @SQL
-  SET @SQL = 'DELETE FROM ' + @stagingTable + ' WHERE Status__c != ''Active'''
-  EXEC sp_executesql @SQL
-  ----------------------------------------------------------------------------
-
-  --------------- COMMENTED OUT THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  --EXEC Create_Cross_Reference_Table 'User', 'Username'
-  ------------------------------------------------------------------------------------
-  RAISERROR('Creating XRef table for REgion', 0 ,1) WITH NOWAIT
-  EXEC Create_Cross_Reference_Table 'Division__c', 'Name', 'SALESFORCE_QA', 'SALESFORCE'
-  EXEC Create_Cross_Reference_Table 'Community_Sheet__c', 'Name', 'SALESFORCE_QA', 'SALESFORCE'
+  RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
+  EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'Community_Sheet__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'Account', 'Username', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'Account', '', @targetLinkedServerName, @sourceLinkedServerName
 
 
   --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------

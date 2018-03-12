@@ -4,19 +4,19 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_BrontoMessages] (
+CREATE PROCEDURE [dbo].[Insert_BrontoDeliveries] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
 
   /*
-    This stored procedure is used for inserting and upserting data for the Accounts object.
+    This stored procedure is used for inserting and upserting data for the Bronto Deliveries object.
 
     Circular definition fields: None.
 
     Need:
 
-    Cross-Reference: Owner, Division
+    Cross-Reference: Owner, Bronto MEssages
 */
 )
 AS
@@ -55,17 +55,17 @@ AS
   RAISERROR('Done.', 0, 1) WITH NOWAIT
 
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'Bronto_Messages__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
 
    -- Update stage table with new UserIds for Owner'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXRef', 'OwnerId'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cxRef', 'Division__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Bronto_Messages__cxRef', 'Division__c'
 
-  -- Basically adding rowcount to keep track of number of records in a table
-  SET @SQL = 'ALTER TABLE '+ @stagingTable +' ADD [Sort] INT IDENTITY (1,1)'
-  EXEC SP_EXECUTESQL @SQL
+  -- -- Basically adding rowcount to keep track of number of records in a table
+  -- SET @SQL = 'ALTER TABLE '+ @stagingTable +' ADD [Sort] INT IDENTITY (1,1)'
+  -- EXEC SP_EXECUTESQL @SQL
 
-  -- Drop all tables with staging table name + split
+  -- -- Drop all tables with staging table name + split
   -- SELECT 'IF OBJECT_ID(''' + TABLE_NAME + ''') IS NOT NULL BEGIN DROP TABLE [' + TABLE_NAME + '] END;' 
   -- FROM INFORMATION_SCHEMA.TABLES 
   -- WHERE TABLE_NAME LIKE '[' + @stagingTable + '_Split]%'
