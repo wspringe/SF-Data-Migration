@@ -62,8 +62,24 @@ EXEC Insert_CampaignTrackerMediaSource 'Campaign_Tracker_Media_Source__c', 'SFDC
 EXEC Insert_Communitysheet 'Community_Sheet__c', 'SFDC_Target', 'SALESFORCE' -- not tested yet
 EXEC Insert_CommunitySheet_FollowUp 'Community_Sheet__c', 'Name', 'Master_Community_Sheet__c', 'SFDC_Target', 'Salesforce' -- not tested yet
 EXEC Insert_Community 'Community__c', 'SFDC_Target', 'Salesforce' -- not edited yet
-EXEC Insert_Plan 'Plan__c', 'SFDC_Target', 'Salesforce'
-EXEC Insert_CommunityUsersContacts 'Community_Users_Contacts__s', 'SFDC_Target', 'SALESFORCE'
+EXEC Insert_Plan 'Plan__c', 'SFDC_Target', 'Salesforce' --untested
+EXEC Insert_CommunityUsersContacts 'Community_Users_Contacts__s', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_ContractManagementTracker 'Contract_Management_Tracker__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_ContractManagementAttachment 'Contract_Management_Attachment__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_DivisionAttachment 'Divsion_Attachment__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_DivisionContact 'Divsion_Contact__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_ElectronicPaymentQueue 'Electronic_Payment_Queue__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_ElectronicPaymentHeader 'Electronic_Payment_Header__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_ElectronicPaymentDetail 'Electronic_Payment_Detail__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_Event 'Event', 'SFDC_Target', 'SALESFORCE' --needs work for the odd WhatId
+EXEC Insert_Neighborhood 'Neighborhood__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_School 'School__c', 'SFDC_Target', 'SALESFORCE' --untested
+EXEC Insert_CommunitySheet_FollowUp 'School__c', 'Name', 'School_District__c', 'SFDC_Target', 'Salesforce' -- not tested yet
+EXEC Insert_Task 'Task', 'SFDC_Target', 'SALESFORCE'
+EXEC Insert_TradePartnerSetup 'Trade_Partner_Setup__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_TPSAttachment 'TPSAttachment__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+
+
 
 
 
