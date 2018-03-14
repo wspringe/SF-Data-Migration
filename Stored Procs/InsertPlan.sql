@@ -32,15 +32,13 @@ AS
   EXEC sp_executesql @SQL
   
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_Replicate @sourceLinkedServerName, @objectName
+  EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
     print 'Error replicating ' + @objectName
   RAISERROR ('Done', 0, 1) WITH NOWAIT
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
-  EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
@@ -58,13 +56,12 @@ AS
   EXEC sp_executesql @SQL
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  EXEC Create_Cross_Reference_Table 'Community__c', 'Name', 'SALESFORCE_QA', 'SALESFORCE'
+  EXEC Create_Id_Based_Cross_Reference_Table 'Community__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Area_Plan_Master_Link__c', @targetLinkedServerName, @sourceLinkedServerName
 
   -- Update stage table with new Ids for Region lookup
-  RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community__cXref', 'Community__c'
-  RAISERROR('TEST', 0, 1) WITH NOWAIT
-  EXEC sp_executesql N'ALTER TABLE Plan__c_Stage_Result ALTER COLUMN Id NCHAR(18) NULL'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Area_Plan_Master_Link__cXref', 'Area_Plan_Master_Link__c'
 
 
   SET @SQL = 'DECLARE @ret_code Int' +

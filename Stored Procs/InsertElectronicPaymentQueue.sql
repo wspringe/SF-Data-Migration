@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Insert_Lot] (
+CREATE PROCEDURE [dbo].[Insert_ElectronicPaymentQueue] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -54,22 +54,15 @@ AS
   EXEC sp_executesql @SQL
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
+  EXEC Create_Id_Based_Cross_Reference_Table 'Division__c', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'User', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Community__c', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Plan__c', @targetLinkedServerName, @sourceLinkedServerName
+
 
   -- Update stage table with new Ids for Region lookup
-  RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community__cXref', 'Community__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Plan__cXref', 'Plan__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Approver_1__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Approver_2__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Approver_3__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Approver_4__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Approver_5__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Builder_Superintendent__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Finish_Superintendent__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Inventory_Designer__c'
+  RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
+
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')

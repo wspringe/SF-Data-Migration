@@ -59,22 +59,22 @@ AS
   EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Cross_Reference_Table 'Community_Sheet__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Cross_Reference_Table 'Account', 'Username', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Cross_Reference_Table 'Account', '', @targetLinkedServerName, @sourceLinkedServerName
-
-
-  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  RAISERROR('Replacing User lookups with User IDs from target org...', 0, 1) WITH NOWAIT
-  SET @SQL = 'update ' + @stagingTable +
-  ' set OwnerID = ''0051F000000ehMmQAI'''
-  EXEC sp_executeSQL @SQL
-  ------------------------------------------------------------------------------------
+  EXEC Create_Id_Based_Cross_Reference_Table 'Account', 'SFDC_Target', 'SALESFORCE'
+  EXEC Create_Id_Based_Cross_Reference_Table 'Contact', 'SFDC_Target', 'SALESFORCE'
 
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
-
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Design_Center__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'DocuSign_Carbon_Copy_1__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'DocuSign_Carbon_Copy_2__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Escrow_Coordinator__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Homeowners_Association__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Preferred_Lender_Contact__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Preferred_Lender_Contact_Alternate__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Sales_Manager__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Title_Contact__c'
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')

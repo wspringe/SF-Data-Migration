@@ -61,9 +61,9 @@ EXEC Insert_CampaignTracker 'Campaign_Tracker__c', 'SFDC_Target', 'SALESFORCE' -
 EXEC Insert_CampaignTrackerMediaSource 'Campaign_Tracker_Media_Source__c', 'SFDC_Target', 'SALESFORCE' --not tested yet
 EXEC Insert_Communitysheet 'Community_Sheet__c', 'SFDC_Target', 'SALESFORCE' -- not tested yet
 EXEC Insert_CommunitySheet_FollowUp 'Community_Sheet__c', 'Name', 'Master_Community_Sheet__c', 'SFDC_Target', 'Salesforce' -- not tested yet
-EXEC Insert_Community 'Community__c', 'SFDC_Target', 'Salesforce' -- not edited yet, need to think of way to create xref of accounts and contacts... prob compared old_sf_id to id
-
-
+EXEC Insert_Community 'Community__c', 'SFDC_Target', 'Salesforce' -- not edited yet
+EXEC Insert_Plan 'Plan__c', 'SFDC_Target', 'Salesforce'
+EXEC Insert_CommunityUsersContacts 'Community_Users_Contacts__s', 'SFDC_Target', 'SALESFORCE'
 
 
 
@@ -113,3 +113,30 @@ SELECT ROW FROM Account_Stage
 ALTER TABLE Bronto_Campaign_Response__c ADD [Sort] INT IDENTITY (1,1)
 
 EXEC SF_Replicate 'SALESFORCE', 'Bronto_Campaign_Response__c', 'pkchunk'
+EXEC Create_Id_Based_Cross_Reference_Table 'Account', 'SFDC_Target', 'SALESFORCE'
+DROP TABLE Account_Source, Account_Target
+SELECT * FROM AccountXref
+
+DROP TABLE Contact_Source, Contact_Target
+EXEC SF_Replicate 'Salesforce', 'Community__c', 'pkchunk'
+EXEC sp_rename 'Community__c', 'Community__c_Stage'
+
+DECLARE @stagingTable VARCHAR(50) = 'Community__c_Stage'
+DECLARE @targetLinkedServerName VARCHAR(50) = 'SFDC_Target'
+DECLARE @sourceLinkedServerName VARCHAR(50) = 'SALESFORCE'
+EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+EXEC Create_Cross_Reference_Table 'Community_Sheet__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
+EXEC Create_Id_Based_Cross_Reference_Table 'Account', @targetLinkedServerName, @sourceLinkedServerName
+EXEC Create_Id_Based_Cross_Reference_Table 'Contact', @targetLinkedServerName, @sourceLinkedServerName
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Design_Center__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'DocuSign_Carbon_Copy_1__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'DocuSign_Carbon_Copy_2__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Escrow_Coordinator__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Homeowners_Association__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Preferred_Lender_Contact__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Preferred_Lender_Contact_Alternate__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Sales_Manager__c'
+EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Title_Contact__c'
