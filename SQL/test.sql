@@ -13,7 +13,7 @@ EXEC Insert_CustomSettings 'EnvisionDivisionSetup__c'
 -- SetupOwnerID is Eric Peterson...? EXEC Insert_CustomSettings 'EPH_Approval_Hierarchical__c'
 EXEC Insert_CustomSettings 'FICR__c'
 EXEC Insert_CustomSettings 'MHDC_Integration_Keys__c'
-EXEC Insert_CustomSettings 'Process_Bypass_Admins__c' 
+EXEC Insert_CustomSettings 'Process_Bypass_Admins__c'
   -- Setup owner ID are profiles
   -- add external id of old id value to Process_Bypass_Admins__c
 EXEC Insert_CustomSettings 'Process_Bypass_Case__c'
@@ -78,7 +78,18 @@ EXEC Insert_CommunitySheet_FollowUp 'School__c', 'Name', 'School_District__c', '
 EXEC Insert_Task 'Task', 'SFDC_Target', 'SALESFORCE'
 EXEC Insert_TradePartnerSetup 'Trade_Partner_Setup__c', 'SFDC_Target', 'SALESFORCE' --done not tested
 EXEC Insert_TPSAttachment 'TPSAttachment__c', 'SFDC_Target', 'SALESFORCE' --done not tested
-
+EXEC Insert_UserDefinedCodeValue 'User_Defined_Code_Value__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetDescription 'Community_Sheet_Description__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetFreeway 'Community_Sheet_Freeway__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetHours 'Community_Sheet_Hours__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetIntegration 'Community_Sheet_Integration__c', 'SFDC_Target', 'SALESFORCE' -- HAVE NOT DONE
+EXEC Insert_CommunitySheetMarketingArea 'Community_Sheet_Marketing_Area__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetMTHContacts 'Community_Sheet_MTH_Contacts__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetNearbyLocation 'Community_Sheet_Nearby_Location__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetNeighborhood 'Community_Sheet_Neighborhood__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetSalesContact 'Community_Sheet_Sales_Contact__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetSchool 'Community_Sheet_School__c', 'SFDC_Target', 'SALESFORCE' --done not tested
+EXEC Insert_CommunitySheetTransportation 'Community_Sheet_Transportation__c', 'SFDC_Target', 'SALESFORCE' --HAVE NOT DONE
 
 
 
@@ -103,7 +114,7 @@ DECLARE @SQL NVARCHAR(1000)
 DECLARE @i INT = 0
 WHILE @i < 10
 BEGIN
-    SET @SQL = 'SELECT * 
+    SET @SQL = 'SELECT *
     INTO Contact_Stage_Split' + CAST(@i AS NVARCHAR(2)) + '
     FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY Id) AS rn FROM Contact_Stage) T1
     WHERE rn % 5 = ' + CAST(@i AS NVARCHAR(2))
@@ -156,3 +167,6 @@ EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Preferred_Lender_
 EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Preferred_Lender_Contact_Alternate__c'
 EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Sales_Manager__c'
 EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Title_Contact__c'
+
+EXEC SF_Replicate 'SALESFORCE', 'Opportunity__c', 'pkchunk'
+SELECT * FROM Opportunity__c WHERE Desired_Monthly_Payment__C > 5000

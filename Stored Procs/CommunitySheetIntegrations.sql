@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Insert_CommunitySheet] (
+CREATE PROCEDURE [dbo].[Insert_CommunitySheetIntegrations] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -25,14 +25,14 @@ AS
   SET @stagingTable = @objectName + '_Stage'
   SET @targetOrgTable = @objectName + '_FromTarget'
 
-  RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAITt
+  RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
   -- Dropping table if table exists
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
     DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
 
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_Replicate @sourceLinkedServerName, @objectName
+  EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
     print 'Error replicating ' + @objectName
   RAISERROR ('Done', 0, 1) WITH NOWAIT
@@ -53,20 +53,15 @@ AS
              + char(10) + 'END'
   EXEC sp_executesql @SQL
 
-  RAISERROR('Setting columns to NULL that cannot be used yet.', 0, 1)
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Master_Community_Sheet__c = '''''
-  EXEC sp_executesql @SQL
-
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Cross_Reference_Table 'Design_Center__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Community_Sheet__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Marketing_Area__c', @targetLinkedServerName, @sourceLinkedServerName
 
   -- Update stage table with new Ids for Region lookup
-  RAISERROR('Replacing fields from target org...', 0, 1) WITH NOWAIT
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Design_Center__cXref', 'Design_center__c'
+  RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Marketing_Area__cXref', 'Marketing_Area__c'
+
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
