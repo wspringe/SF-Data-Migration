@@ -20,7 +20,7 @@ ALTER PROCEDURE [dbo].[Insert_Option] (
 */
 )
 AS
-  declare @SQL NVARCHAR(1000)
+  declare @SQL NVARCHAR(4000)
   DECLARE @stagingTable VARCHAR(50), @targetOrgTable VARCHAR(50)
   SET @stagingTable = @objectName + '_Stage' 
   SET @targetOrgTable = @objectName + '_FromTarget'
@@ -30,6 +30,12 @@ AS
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
     DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
+
+  RAISERROR('Dropping all related split tables', 0 , 1) WITH NOWAIT
+  -- taken from http://www.sqlservercurry.com/2012/12/drop-all-tables-in-database-whose-name.html
+  SET @SQL = ''
+  SELECT @sql=@sql + ' DROP TABLE '+table_name from INFORMATION_SCHEMA.TABLES where table_name like @stagingTable + '_Split_%'
+  EXEC sp_executeSQL @SQL
   
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
   EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
@@ -39,24 +45,10 @@ AS
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
-  EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
-
-  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  SET @SQL = 'DELETE FROM ' + @stagingTable + ' WHERE Status__c != ''Active'''
-  EXEC sp_executeSQL @SQL
-  ----------------------------------------------------------------------------
-
-   --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  RAISERROR('Replacing User lookups with my ID', 0, 1) WITH NOWAIT
-  SET @SQL = 'update ' + @stagingTable +
-  ' set OwnerId = ''0051F000000ehMmQAI'''
-  EXEC sp_executeSQL @SQL
-  ------------------------------------------------------------------------------------
 
   -- Dropping object table from source if already have it
   RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
@@ -67,30 +59,82 @@ AS
              + char(10) + 'END'
   EXEC sp_executesql @SQL
 
-  --------------------- COMMENTED OUT FOR DM TO QA --------------------------------
-  -- RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  -- EXEC Create_Cross_Reference_Table 'User', 'Username', 'SFDC_Target', 'SALESFORCE'
+  RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
+  EXEC Create_Cross_Reference_Table 'User', 'Username', 'SFDC_Target', 'SALESFORCE'
 
-  -- -- Update stage table with new Ids for Region lookup
-  -- RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
-  -- EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
-  ---------------------------------------------------------------------------------
+  -- Update stage table with new Ids for Region lookup
+  RAISERROR('Replacing Division__c from target org...', 0, 1) WITH NOWAIT
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
 
-  SET @SQL = 'DECLARE @ret_code Int' +
-        char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
-        BEGIN' +
-          char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
-          char(10) + 'IF @ret_code != 0' +
-          char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
-        char(10) + 'END
-      ELSE
-        BEGIN' +
-        char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_TableLoader ''Insert'', ''' + @targetLinkedServerName +''', ''' + @stagingTable + '''' +
-          char(10) + 'IF ' + '@ret_code' + ' != 0' +
-            char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
-        END'
-  EXEC SP_ExecuteSQL @SQL
+
+  RAISERROR('Adding row numbers to table in order to split it...', 0, 1) WITH NOWAIT
+  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' ADD [Sort] int IDENTITY (1,1)'
+  EXEC sp_executesql @SQL
+
+  RAISERROR('Splitting %s table into ~200,000 record tables', 0, 1, @stagingTable) WITH NOWAIT
+  DECLARE @maxRows INT
+  DECLARE @i INT = 1
+  DECLARE @count INT = 0
+  SELECT @maxRows = COUNT(Id) FROM Contact_Stage --don't forget to change this
+  WHILE @i < @maxRows
+  BEGIN
+    SET @SQL = 'SELECT [Area__c]
+      ,[Community_Name__c]
+      ,[Community_Number__c]
+      ,[CreatedById]
+      ,[CreatedDate]
+      ,[Effective_Date__c]
+      ,[Elevation__c]
+      ,[Expiration_Date__c]
+      ,[Id]
+      ,[IsDeleted]
+      ,[jdeOptionKey__c]
+      ,[LastActivityDate]
+      ,[LastModifiedById]
+      ,[LastModifiedDate]
+      ,[LastReferencedDate]
+      ,[LastViewedDate]
+      ,[Name]
+      ,[Option_Category__c]
+      ,[Option_Description__c]
+      ,[Option_Description_Extended_Text__c]
+      ,[Option_Extended_Text__c]
+      ,[Option_Number__c]
+      ,[Option_Type__c]
+      ,[OptionType__c]
+      ,[OwnerId]
+      ,[Phase__c]
+      ,[Plan_Elevation__c]
+      ,[Plan_Number__c]
+      ,[Previous_Sales_Price__c]
+      ,[Price_Effective__c]
+      ,[Price_Expiration__c]
+      ,[Sales_Price__c]
+      ,[Source_ID__c]
+      ,[Status__c]
+      ,[Status_Cutoff_After__c]
+      ,[Status_Cutoff_Before__c]
+      ,[SystemModstamp]
+      ,[Old_SF_ID__c]
+    INTO ' + @stagingTable + '_Split' + CAST(@count AS NVARCHAR(10)) +
+    CHAR(10) + 'FROM ' + @stagingTable + '
+    WHERE Sort >= '  + CAST(@i AS NVARCHAR(10)) + ' AND Sort <= '
+    SET @i = @i + 200000
+    IF @i > @maxRows
+      SET @i = @maxRows
+    SET @SQL = @SQL + CAST(@i AS NVARCHAR(10)) + ' ORDER BY AccountId'
+    SET @count = @count + 1
+    RAISERROR('%d iteration of loop', 0, 1, @count) WITH NOWAIT
+    EXEC sp_executeSQL @sql
+  END
+
+  RAISERROR('Upserting split tables...', 0, 1) WITH NOWAIT
+  SET @i = 0
+  WHILE @i < @count
+  BEGIN
+      SET @SQL = 'EXEC SF_Tableloader ''Upsert:IgnoreFailures(5)'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable + '_Split' + CAST(@i AS NVARCHAR(2)) + ''', ''Old_SF_ID__C'''
+      SET @i = @i + 1
+      EXEC sp_executeSQL @SQL
+  END
 
   GO

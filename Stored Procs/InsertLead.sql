@@ -4,10 +4,11 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_Lead] (
+ALTER PROCEDURE [dbo].[Insert_Lead] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
-  @sourceLinkedServerName VARCHAR(50)
+  @sourceLinkedServerName VARCHAR(50),
+  @systemUserId VARCHAR(18)
 
   /*
     This stored procedure is used for inserting and upserting data for the Marketing Area object.
@@ -62,10 +63,12 @@ AS
   EXEC Create_Id_Based_Cross_Reference_Table 'Account', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Contact', @targetLinkedServerName, @sourceLinkedServerName
 
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Primary_Sales_Associate__c'
+
   RAISERROR('Deleting records that will not be leads', 0 ,1) WITH NOWAIT
   SET @SQL = 'DELETE FROM ' + @stagingTable + '
               WHERE Customer_Status__c = ''A - Prospect'' OR Customer_Status__c = ''B - Prospect'''
-  EXEC sp_execute_sql @SQL
+  EXEC sp_executesql @SQL
 
   RAISERROR('Renaming columns to fit into Leads', 0 ,1) WITH NOWAIT
   SET @SQL = 'EXEC sp_rename ''' + @stagingTable + '.Address__c'', ''Address'', ''COLUMN'''
@@ -164,23 +167,29 @@ AS
 
   -- Data transformation to Lead status based on provided picture
   SET @SQL = 'UPDATE ' + @stagingTable + ' 
-              SET Status = ''Working''
-              WHERE Customer_Status__c = ''C - Lead'' AND Opportunity_Status__c = ''Active'''
+              SET Status = ''Working'', OwnerID = Primary_Sales_Associate__c
+              WHERE Customer_Status__c = ''C - Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE ' + @stagingTable + ' 
-              SET Status = ''Nurturing''
-              WHERE Customer_Status__c = ''C - Lead'' AND Opportunity_Status__c = ''Inactive'''
+              SET Status = ''Nurturing'', OwnerID = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''C - Lead'' AND Opportunity_Status__c = ''Inactive'' AND Months_Since_Last_Update__c < 18'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE ' + @stagingTable + ' 
-              SET Status = ''Nurturing''
-              WHERE Customer_Status__c = ''E - Lead'' AND Opportunity_Status__c = ''Inactive'''
+              SET Status = ''Working'', OwnerId = Primary_Sales_Associate__c
+              WHERE Customer_Status__c = ''E - Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE ' + @stagingTable + ' 
-              SET Status = ''Nurturing''
-              WHERE Customer_Status__c = ''E - Lead'' AND Opportunity_Status__c = ''Active'''
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''E - Lead'' AND Opportunity_Status__c = ''Inactive'' AND Months_Since_Last_Update__c < 18'
   EXEC sp_executesql @SQL
-
-  
+  SET @SQL = 'UPDATE ' + @stagingTable + ' 
+              SET Status = ''Nurturing'', OwnerId = Primary_Sales_Associate__c
+              WHERE Months_Since_Last_Update__c > 18 AND Primary_Sales_Associate = '''''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + ' 
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Months_Since_Last_Update__c > 18 And Primary_Sales_Associate__c != '''''
+  EXEC sp_executesql @SQL
 
 
   -- Update stage table with new Ids for Region lookup
@@ -188,10 +197,15 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Lender_Company__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Lender_Name__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Primary_Sales_Associate__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Secondary_Sales_Associate__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Realtor_Company__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Realtor_Name__c'
+
+  SET @SQL = 'UPDATE ' + @stagingTable + ' 
+              SET OwnerId = Primary_Sales_Associate__c
+              WHERE Customer_Status__c = ''E - Lead'' AND Opportunity_Status__c = ''Active'''
+  EXEC sp_executesql @SQL
+
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')

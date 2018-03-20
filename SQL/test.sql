@@ -48,10 +48,10 @@ EXEC Insert_Region 'Region__c'
 EXEC Insert_SolarAddendum 'Solar_Addendum__c'
 EXEC Insert_SolarAddendumDetail 'Solar_Addedum_Detail__c' -- Misspelled object name
 EXEC Insert_UserDefinedCodeTypes 'User_Defined_Code_Types__c'
-EXEC Insert_Division 'Division__c' -- loop back to update Design_center__c and title_company__c with accounts once accounts is done
-EXEC Insert_Accounts 'Account', 'SFDC_Target', 'SALESFORCE' -- wprk on this
-EXEC Insert_MarketingArea 'Marketing_Area__c'
-EXEC Insert_Contacts 'Contact', 'SFDC_Target', 'SALESFORCE' -- work on this
+EXEC Insert_Division 'Division__c', 'SFdC_Target', 'SALESFORCE' -- loop back to update Design_center__c and title_company__c with accounts once accounts is done
+EXEC Insert_Accounts 'Account', 'SFDC_Target', 'SALESFORCE' -- it works
+EXEC Insert_MarketingArea 'Marketing_Area__c', 'SFDC_Target', 'SALESFORCE'
+EXEC Insert_Contacts 'Contact', 'SFDC_Target', 'SALESFORCE' -- 100%, have to disable filter on User_ID__c for 100%
 EXEC Insert_SunPowerRecord 'Sun_Power_record__c', 'SFDC_Target', 'Salesforce' -- look at this when get more than 3GB of fucking RAM
 EXEC Insert_BrontoMessages 'Bronto_Messages__c', 'SFDC_Target', 'Salesforce' -- not tested yet, add only records from 2018
 EXEC Insert_ApprovalActor 'Approval_Actor__c', 'SFDC_Target', 'Salesforce' -- not tested yet
@@ -170,3 +170,5 @@ EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Title_Contact__c'
 
 EXEC SF_Replicate 'SALESFORCE', 'Opportunity__c', 'pkchunk'
 SELECT * FROM Opportunity__c WHERE Desired_Monthly_Payment__C > 5000
+
+DROP TABLE Account_Target

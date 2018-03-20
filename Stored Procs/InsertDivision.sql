@@ -22,107 +22,58 @@ ALTER PROCEDURE [dbo].[Insert_Division] (
 AS
   declare @SQL NVARCHAR(1000)
   DECLARE @stagingTable VARCHAR(50), @targetOrgTable VARCHAR(50)
-  SET @stagingTable = @objectName + '_Stage' 
+  SET @stagingTable = @objectName + '_Stage'
   SET @targetOrgTable = @objectName + '_FromTarget'
-  
+
   RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
   -- Dropping table if table exists
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
     DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
-  
+  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NOT NULL
+    DROP TABLE ' + @targetOrgTable
+  EXEC sp_executesql @SQL
+
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_Replicate @sourceLinkedServerName, @objectName
+  EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
     print 'Error replicating ' + @objectName
   RAISERROR ('Done', 0, 1) WITH NOWAIT
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
-  EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' SET OwnerID = ''0054D000000nyn7QAA'''
+  EXEC sp_executesql @SQL
+
+  RAISERROR ('Setting unusable columns to empty...', 0, 1) WITH NOWAIT
+  SET @SQL = 'UPDATE '+ @stagingTable + ' SET Design_Center__c = '''', Lien_Agent_Company__c = '''', Lien_Agent_Contact__c = '''', Title_Company__c = ''''' 
+  EXEC sp_executesql @SQL
 
   -- Dropping object table from source if already have it
   RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NULL'
-             + char(10) + 'BEGIN'
-             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''''
+  SET @SQL = 'BEGIN'
+             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''', ''pkchunk'''
              + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
              + char(10) + 'END'
   EXEC sp_executesql @SQL
 
+  RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
+  EXEC Create_Id_Based_Cross_Reference_Table 'User', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Region__c', @targetLinkedServerName, @sourceLinkedServerName
 
-  RAISERROR('Dropping unnecessary columns.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' DROP COLUMN Lien_Agent_Company__c, Lien_Agent_Contact__c'
-  EXEC sp_executesql @SQL
-
-  RAISERROR('Setting columns to NULL that cannot be used yet.', 0, 1)
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Design_Center__c = '''', Title_Company__c = '''''
-  EXEC sp_executesql @SQL
-
-  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Division_Authorizer_2__c = '''', Division_President__c = '''''
-  EXEC sp_executesql @SQL
-  ----------------------------------------------------------------------------
-
-  --------------- COMMENTED OUT THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  --EXEC Create_Cross_Reference_Table 'User', 'Username'
-  ------------------------------------------------------------------------------------
-  RAISERROR('Creating XRef table for REgion', 0 ,1) WITH NOWAIT
-  EXEC Create_Cross_Reference_Table 'Region__c', 'Name', 'SALESFORCE_QA', 'SALESFORCE'
-
-  --------------- COMMENTED OUT THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  -- Update stage table with new UserIds for Owner'
-  -- RAISERROR('Replacing Owner with User IDs from target org...', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'update ' + @stagingTable +
-  -- ' set OwnerId = x.TargetID
-  -- FROM UserXRef x 
-  -- WHERE x.SourceID = ' + @stagingTable + '.OwnerId'
-  -- EXEC sp_executeSQL @SQL
-
-  --   RAISERROR('Replacing Division_Authorizer__c with User IDs from target org...', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'update ' + @stagingTable +
-  -- ' set Division_Authorizer__c = x.TargetID
-  -- FROM UserXRef x 
-  -- WHERE x.SourceID = ' + @stagingTable + '.Division_Authorizer__c'
-  -- EXEC sp_executeSQL @SQL
-
-  --   RAISERROR('Replacing Division_Authorizer_2__c with User IDs from target org...', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'update ' + @stagingTable +
-  -- ' set Division_Authorizer_2__c = x.TargetID
-  -- FROM UserXRef x 
-  -- WHERE x.SourceID = ' + @stagingTable + '.Division_Authorizer_2__c'
-  -- EXEC sp_executeSQL @SQL
-
-  -- RAISERROR('Replacing Division_President__c with User IDs from target org...', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'update ' + @stagingTable +
-  -- ' set Division_President__c = x.TargetID
-  -- FROM UserXRef x 
-  -- WHERE x.SourceID = ' + @stagingTable + '.Division_President__c'
-  -- EXEC sp_executeSQL @SQL
-
-  -- RAISERROR('Replacing Escrow Coordinator with User IDs from target org...', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'update ' + @stagingTable +
-  -- ' set Escrow_Coordinator__c = x.TargetID
-  -- FROM UserXRef x 
-  -- WHERE x.SourceID = ' + @stagingTable + '.Escrow_Coordinator__c'
-  -- EXEC sp_executeSQL @SQL
-  ------------------------------------------------------------------------------------
-
-  --------------- ADDED THE FOLLOWING FOR DM TO QA PURPOSEs ------------------
-  RAISERROR('Replacing Escrow Coordinator with User IDs from target org...', 0, 1) WITH NOWAIT
-  SET @SQL = 'update ' + @stagingTable +
-  ' set Division_Authorizer__c = ''0051F000000ehMmQAI'', Escrow_Coordinator__c = ''0051F000000ehMmQAI'', OwnerID = ''0051F000000ehMmQAI'''
-  EXEC sp_executeSQL @SQL
-  ------------------------------------------------------------------------------------
 
   -- Update stage table with new Ids for Region lookup
-  RAISERROR('Replacing Owner with User IDs from target org...', 0, 1) WITH NOWAIT
+  RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Division_President__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Escrow_Coordinator__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Region__cXref', 'Region__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Division_Authorizer__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Division_Authorizer_2__c'
+
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
@@ -140,5 +91,4 @@ AS
             char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
         END'
   EXEC SP_ExecuteSQL @SQL
-
   GO

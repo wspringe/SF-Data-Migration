@@ -6,7 +6,9 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 ALTER PROCEDURE [dbo].[Insert_Users] (
-  @objectName VARCHAR(50)
+  @objectName VARCHAR(50),
+  @targetLinkedServerName VARCHAR(50),
+  @sourceLinkedServerName VARCHAR(50)
 
   /*
     This stored procedure is used for inserting roles into the new Salesforce org from the old Salesforce org.
@@ -19,14 +21,16 @@ ALTER PROCEDURE [dbo].[Insert_Users] (
 */
 )
 AS
-  declare @SQL NVARCHAR(250)
-  DECLARE @stagingTable VARCHAR(50)
-  SET @stagingTable = @objectName + '_Stage' 
+  declare @SQL NVARCHAR(1000)
+  DECLARE @stagingTable VARCHAR(50), @targetOrgTable VARCHAR(50)
+  SET @stagingTable = @objectName + '_Stage'
+  SET @targetOrgTable = @objectName + '_FromTarget'
   
   RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
   -- Dropping table if table exists
-  IF OBJECT_ID('dbo.User_Stage', 'U') IS NOT NULL
-    DROP TABLE dbo.User_Stage
+  SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
+    DROP TABLE ' + @stagingTable
+  EXEC sp_executesql @SQL
   
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
   EXEC SF_Replicate 'SALESFORCE', @objectName
@@ -40,12 +44,12 @@ AS
   EXEC sp_executesql N'DELETE FROM User_Stage WHERE UPPER(Email) LIKE ''wesley.springer@meritagehomes.com'''
 
   RAISERROR ('Creating Cross-Ref table for profile...', 0, 1) WITH NOWAIT
-  EXEC dbo.Create_Cross_Reference_Table @objectName = 'Profile', -- varchar(50)
-     @uniqueIdentifier = 'Name' -- varchar(50)
+  EXEC dbo.Create_Cross_Reference_Table 'Profile', -- varchar(50)
+     'Name', @targetLinkedServerName, @sourceLinkedServerName -- varchar(50)
 
   RAISERROR ('Creating Cross-Ref table for UserRole...', 0, 1) WITH NOWAIT
-  EXEC dbo.Create_Cross_Reference_Table @objectName = 'UserRole', -- varchar(50)
-      @uniqueIdentifier = 'Name' -- varchar(50)
+  EXEC dbo.Create_Cross_Reference_Table 'UserRole', -- varchar(50)
+      'Name', @targetLinkedServerName, @sourceLinkedServerName -- varchar(50)
   
   -- rename isActive column to PreviouslyActive to keep track of if User was active before
   RAISERROR ('Renaming IsActive column to Old_SF_User_isActive__c', 0, 1) WITH NOWAIT
@@ -53,13 +57,12 @@ AS
   
   -- Create a new IsActive column and set it to false so no users are active when inserted
   RAISERROR ('Creating new IsActive column with all users set to inactive, and creating Error column.', 0, 1) WITH NOWAIT
-  EXEC sp_executesql N'ALTER TABLE User_Stage add [Error] NVARCHAR(2000) NULL'
   EXEC sp_executesql N'ALTER TABLE User_Stage add [IsActive] NCHAR(5)'
   EXEC sp_executesql N'UPDATE User_Stage set IsActive = ''False'''
 
   RAISERROR('Adding Old_SF_User_ID__c column and setting it equal to Id.', 0, 1) WITH NOWAIT
-  EXEC sp_executeSQL N'ALTER TABLE User_Stage add [Old_SF_User_ID__c] NCHAR(18)'
-  EXEC sp_executesql N'UPDATE User_Stage SET Old_SF_User_ID__c = Id'
+  EXEC sp_executeSQL N'ALTER TABLE User_Stage add [Old_SF_ID__c] NCHAR(18)'
+  EXEC sp_executesql N'UPDATE User_Stage SET Old_SF_ID__c = Id'
   
   RAISERROR ('Dropping unnecessary columns.', 0, 1) WITH NOWAIT
   EXEC sp_executeSQL N'ALTER TABLE User_Stage DROP COLUMN
@@ -106,6 +109,11 @@ AS
   ------------------------------------------------------
 
   -- Update User_Stage with new ProfileIds from the cross-reference table
+
+  SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
+    DROP TABLE ' + @stagingTable
+  EXEC sp_executesql @SQL
+  
   RAISERROR ('Updating Profile and UserRole columns with IDs from target org...', 0, 1) WITH NOWAIT
   set @SQL = 'update ' + @stagingTable +
   ' set ProfileId = x.TargetID
@@ -121,18 +129,33 @@ AS
   WHERE x.SourceID = ' + @stagingTable + '.UserRoleId'
 
   exec sp_executesql @SQL
+
+  RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
+  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NULL'
+             + char(10) + 'BEGIN'
+             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''''
+             + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
+             + char(10) + 'END'
+  EXEC sp_executesql @SQL
   
-  RAISERROR ('Done.', 0, 1) WITH NOWAIT
 
-  -- Insert new records and then update records, note that this will error
-  -- EXEC dbo.SF_BulkOps 'Insert', 'SFDC_Target', @stagingTable
-  -- EXEC dbo.SF_BulkOps @operation = 'Update', -- nvarchar(200)
-  --     @table_server = 'SFDC_Target', -- sysname
-  --     @table_name = @stagingTable, -- sysname
-  --     @opt_param1 = NULL, -- nvarchar(512)
-  --     @opt_param2 = NULL -- nvarchar(512)
-
-  EXEC dbo.SF_BulkOps 'Upsert:IgnoreNulls', 'SFDC_Target', @stagingTable, 'Old_SF_User_ID__c'
+  SET @SQL = 'DECLARE @ret_code Int' +
+          char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
+          BEGIN' +
+            char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
+            char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
+            char(10) + 'IF @ret_code != 0' +
+            char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
+          char(10) + 'END
+        ELSE
+          BEGIN' +
+          char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
+            char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_TableLoader ''Insert'', ''' + @targetLinkedServerName +''', ''' + @stagingTable + '''' +
+            char(10) + 'IF ' + '@ret_code' + ' != 0' +
+              char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
+          END'
+  EXEC SP_ExecuteSQL @SQL
+  GO
   
 
 

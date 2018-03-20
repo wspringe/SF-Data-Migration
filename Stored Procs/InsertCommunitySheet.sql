@@ -25,7 +25,7 @@ AS
   SET @stagingTable = @objectName + '_Stage'
   SET @targetOrgTable = @objectName + '_FromTarget'
 
-  RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAITt
+  RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
   -- Dropping table if table exists
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
     DROP TABLE ' + @stagingTable
@@ -61,12 +61,14 @@ AS
   EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Cross_Reference_Table 'Design_Center__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Loan_Type__c', @targetLinkedServerName, @sourceLinkedServerName
 
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing fields from target org...', 0, 1) WITH NOWAIT
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Design_Center__cXref', 'Design_center__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Loan_Type__cXref', 'LoanType__c'
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')

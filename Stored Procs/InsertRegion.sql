@@ -39,8 +39,6 @@ AS
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Old SF ID column.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
-  EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
@@ -55,19 +53,10 @@ AS
              + char(10) + 'END'
   EXEC sp_executesql @SQL
 
-  -- EXEC Create_Cross_Reference_Table 'User', 'Username'
+  EXEC Create_Cross_Reference_Table 'User', 'Username'
 
-   -- Update stage table with new UserIds for Owner'
-  -- RAISERROR('Replacing Owner with User IDs from target org...', 0, 1) WITH NOWAIT
-  -- SET @SQL = 'update ' + @stagingTable +
-  -- ' set OwnerId = x.TargetID
-  -- FROM UserXRef x 
-  -- WHERE x.SourceID = ' + @stagingTable + '.OwnerId'
-  -- EXEC sp_executeSQL @SQL
-
-  RAISERROR('Putting Wesley as Owner of records.', 0 ,1) WITH NOWAIT
-  SET @SQL = 'UPDATE ' + @stagingTable + ' SET OwnerID = ''0051F000000ehMmQAI'''
-  EXEC sp_executesql @SQL
+  -- Update stage table with new UserIds for Owner'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
