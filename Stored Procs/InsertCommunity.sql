@@ -39,8 +39,6 @@ AS
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Error] NVARCHAR(2000) NULL'
-  EXEC sp_executesql @SQL
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
@@ -54,6 +52,9 @@ AS
              + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
              + char(10) + 'END'
   EXEC sp_executesql @SQL
+
+  RAISERROR('Changing column names...', 0, 1) WITH NOWAIT
+  EXEC sp_rename 'Community__c_stage.Community_Demographic_Information__c', 'Community_Sheet__c', 'COLUMN'
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
   EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
@@ -75,6 +76,8 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Preferred_Lender_Contact_Alternate__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Sales_Manager__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Title_Contact__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Preferred_Lender__c'
 
   SET @SQL = 'DECLARE @ret_code Int' +
         char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')

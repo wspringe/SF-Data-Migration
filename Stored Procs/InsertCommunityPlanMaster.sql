@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Insert_Plan] (
+ALTER PROCEDURE [dbo].[Insert_CommunityPlanMaster] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -61,18 +61,11 @@ AS
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
   EXEC Create_Id_Based_Cross_Reference_Table 'Community__c', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Community_Plan_Master__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Area_Plan_Master_Link__c', @targetLinkedServerName, @sourceLinkedServerName
 
   -- Update stage table with new Ids for Region lookup
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community__cXref', 'Community__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Plan_Master__cXref', 'Community_Plan_Master__c'
-
-  SET @SQL = 'SELECT * INTO ' + @stagingTable + '2 FROM ' + @stagingTable + ' ORDER BY Community__c'
-  EXEC sp_executeSQL @SQL
-  SET @SQL = 'DROP TABLE ' + @stagingTable + '2'
-  EXEC sp_Executesql @SQL
-  SET @SQL = 'EXEC sp_rename ''' + @stagingTable + '2'', ''' + @stagingTable + ''''
-  EXEC sp_executeSQL @SQL
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Area_Plan_Master_Link__cXref', 'Area_Plan_Master_Link__c'
 
 
   SET @SQL = 'DECLARE @ret_code Int' +
