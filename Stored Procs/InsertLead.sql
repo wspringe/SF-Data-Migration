@@ -21,7 +21,7 @@ ALTER PROCEDURE [dbo].[Insert_Lead] (
 */
 )
 AS
-  declare @SQL NVARCHAR(1000)
+  declare @SQL NVARCHAR(4000)
   DECLARE @stagingTable VARCHAR(50), @targetOrgTable VARCHAR(50)
   SET @stagingTable = 'Lead_Stage'
   SET @targetOrgTable = 'Lead' + '_FromTarget'
@@ -78,7 +78,7 @@ AS
 
   RAISERROR('Deleting records that will not be leads', 0 ,1) WITH NOWAIT
   SET @SQL = 'DELETE FROM ' + @stagingTable + '
-              WHERE Customer_Status__c = ''A – Prospect'' OR Customer_Status__c = ''B – Prospect'''
+              WHERE Customer_Status__c = ''A – Prospect'' OR Customer_Status__c = ''B – Prospect'' OR Total_Sale_Count__C > 0'
   EXEC sp_executesql @SQL
 
   RAISERROR('Renaming columns to fit into Leads...', 0 ,1) WITH NOWAIT
@@ -304,6 +304,134 @@ AS
               SET How_did_you_learn_about_Meritage_Homes__c = ''Newspaper or magazine''
               WHERE How_did_you_learn_about_Meritage_Homes__c = ''Newspaper'''
   EXEC sp_executesql @SQL
+   SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Google''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Other Websites'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Friends and Family''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Referral/Friend/Relative'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Direct Mail''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Flyers Through US Mail'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Google''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''eBlast'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human Directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c LIKE ''%Human signs%'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Meritage emails''
+  WHERE How_did_you_learn_about_Meritage_Homes__c =  ''E-Mail'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c =  ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Friends and Family''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Friends/Family'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Google''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Internet'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Google''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Movenewhome.com'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Friends and Family''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Friend or Relative'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Billboards''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Signs'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Billboards''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Neighborhood Signs'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Newhomesource.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''NewHomesSource.com'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Be Back'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Be-back'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''BeBack'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Employee'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Television''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''TV/Radio'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Meritage emails''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Email'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''HumanMSigns'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Realtor recommendation''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Realtor Preview'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Realtor recommendation''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Self Generated/ Realtor Relations'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Meritage H/O Refer'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Self Generated/ Customer Referral'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Prev Meritage H/O'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Driveby'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Self Generated'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Newspaper or magazine''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Magazine'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com,MLS'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Direct Mail''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''DirectMMail'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Human Directional'''
+  EXEC sp_executesql @SQL
 
   RAISERROR('Performing data transformation on required or too long fields from old prod...', 0, 1) WITH NOWAIT
   SET @SQL = 'UPDATE ' + @stagingTable + '
@@ -344,7 +472,35 @@ AS
   SELECT @maxRows = COUNT(Id) FROM Lead_Stage --don't forget to change this
   WHILE @i < @maxRows
   BEGIN
-    SET @SQL = 'SELECT *
+    SET @SQL = 'SELECT [Anticipated_time_to_move_into_new_home__c]
+      ,[MobilePhone]
+      ,[FirstName]
+      ,[LastName]
+      ,[State]
+      ,[PostalCode]
+      ,[Describe_Back_Story__c]
+      ,[Fears_of_Moving__c]
+      ,[How_did_you_learn_about_Meritage_Homes__c]
+      ,[Lender_Company__c]
+      ,[Loan_Pre_Qualification_Date__c]
+      ,[Original_OSC__c]
+      ,[City]
+      ,[LeadSource]
+      ,[Primary_Sales_Associate__c]
+      ,[Realtor_Company__c]
+      ,[Realtor_Name__c]
+      ,[Realtor_Representing__c]
+      ,[Secondary_Sales_Associate__c]
+      ,[Strongest_Considerations_for_new_home_se__c]
+      ,[Walk_In_Date__c]
+      ,[IsWebLead__c]
+      ,[What_is_your_current_housing_status__c]
+      ,[Old_SF_ID__c]
+      ,[X7_Desired_Monthly_Payment__c]
+      ,[Status]
+      ,[Company]
+      ,[OwnerID]
+      ,[Id]
     INTO ' + @stagingTable + '_Split' + CAST(@count AS NVARCHAR(10)) +
     CHAR(10) + 'FROM ' + @stagingTable + '
     WHERE Sort >= '  + CAST(@i AS NVARCHAR(10)) + ' AND Sort <= '

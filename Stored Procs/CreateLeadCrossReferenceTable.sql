@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Create_Opportunity_Cross_Reference_Table] (
+ALTER PROCEDURE [dbo].[Create_Lead_Cross_Reference_Table] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -94,6 +94,5 @@ AS
     on t.Old_SF_ID__c' + ' = s.SourceId'
   EXEC sp_executesql @SQL
   RAISERROR ( 'Filled in %s cross-reference table', 0, 1, @objectName) WITH NOWAIT
-
 
 
