@@ -60,6 +60,7 @@ AS
 
   --PLACEHOLDER
   SET @SQL = 'UPDATE ' + @stagingTable + ' SET StageName = ''1st visit'', CloseDate = ''2010-01-01'''
+  EXEC SP_Executesql @SQL
 
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
@@ -100,10 +101,6 @@ AS
   SET @SQL = 'UPDATE ' + @stagingTable + '
               SET LeadSource = ''Chat/Phone Call''
               WHERE LeadSource = ''Meritage Online Sales Consultant'''
-  EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE ' + @stagingTable + '
-              SET LeadSource = ''Other''
-              WHERE LeadSource = ''''Human Signs'''''
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE ' + @stagingTable + '
               SET LeadSource = ''Signage''
@@ -310,7 +307,7 @@ AS
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE ' + @stagingTable + '
   SET How_did_you_learn_about_Meritage_Homes__c = ''Friends and Family''
-  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Friend or Relative'''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Friend or Family'''
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE ' + @stagingTable + '
   SET How_did_you_learn_about_Meritage_Homes__c = ''Billboards''
@@ -396,11 +393,40 @@ AS
   SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
   WHERE How_did_you_learn_about_Meritage_Homes__c = ''Human Directional'''
   EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''MeritageHomes.com''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Meritage Website'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Event''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Parade of Homes'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Human directionals''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Self Generated/ Networking'''
+  EXEC sp_executesql @SQL
+    SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Friends and Family''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Friends or Relative'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Community directional signs''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Another Community'''
+  EXEC sp_executesql @SQL
+    SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Realtor recommendation''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Realtor w Client'''
+  EXEC sp_executesql @SQL
+      SET @SQL = 'UPDATE ' + @stagingTable + '
+  SET How_did_you_learn_about_Meritage_Homes__c = ''Friends and Family''
+  WHERE How_did_you_learn_about_Meritage_Homes__c = ''Friend or Relative'''
+  EXEC sp_executesql @SQL
+
 
 
   SET @SQL = 'update ' + @stagingTable + '
   set Customer__c = x.PersonContactId
-  FROM Account_Stage x 
+  FROM Account_Stage x
   WHERE x.Id = ' + @stagingTable + '.Customer__c'
   EXEC sp_executesql @SQL
 

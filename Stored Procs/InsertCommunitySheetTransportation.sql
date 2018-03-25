@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_Neighborhood] (
+ALTER PROCEDURE [dbo].[Insert_CommunitySheetTransportation] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -46,15 +46,13 @@ AS
 
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Division__c', @targetLinkedServerName, @sourceLinkedServerName
-
+  EXEC Create_Id_Based_Cross_Reference_Table 'Community_Sheet__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Public_Transportation__c', @targetLinkedServerName, @sourceLinkedServerName
 
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
-
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Public_Transportation__cXref', 'Public_Transportation__c'
 
   SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''
   EXEC SP_ExecuteSQL @SQL

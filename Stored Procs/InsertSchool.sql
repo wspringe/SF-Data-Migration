@@ -22,15 +22,15 @@ CREATE PROCEDURE [dbo].[Insert_School] (
 AS
   declare @SQL NVARCHAR(1000)
   DECLARE @stagingTable VARCHAR(50), @targetOrgTable VARCHAR(50)
-  SET @stagingTable = @objectName + '_Stage' 
+  SET @stagingTable = @objectName + '_Stage'
   SET @targetOrgTable = @objectName + '_FromTarget'
-  
+
   RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
   -- Dropping table if table exists
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
     DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
-  
+
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
   EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
@@ -46,17 +46,8 @@ AS
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET School_District__c = '''''
   EXEC sp_executesql @SQL
 
-  -- Dropping object table from source if already have it
-  RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NULL'
-             + char(10) + 'BEGIN'
-             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''''
-             + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
-             + char(10) + 'END'
-  EXEC sp_executesql @SQL
-
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  EXEC Create_Id_Based_Cross_Reference_Table 'User', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Division__c', @targetLinkedServerName, @sourceLinkedServerName
 
 
@@ -65,22 +56,7 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
 
-
-  SET @SQL = 'DECLARE @ret_code Int' +
-        char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
-        BEGIN' +
-          char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
-          char(10) + 'IF @ret_code != 0' +
-          char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
-        char(10) + 'END
-      ELSE
-        BEGIN' +
-        char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_TableLoader ''Insert'', ''' + @targetLinkedServerName +''', ''' + @stagingTable + '''' +
-          char(10) + 'IF ' + '@ret_code' + ' != 0' +
-            char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
-        END'
+  SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''
   EXEC SP_ExecuteSQL @SQL
 
   GO

@@ -43,6 +43,28 @@ AS
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' SET Transfer_From_Sale__C = '''''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' SET Transfer_To_Sale__C = '''''
+  EXEC sp_executesql @SQL
+
+    RAISERROR('Fixing one-off emails...', 0, 1) WITH NOWAIT
+    SET @SQL = 'UPDATE ' + @stagingTable + '
+    SET Customer_Email_Address__c  = ''delaine.gaston@gmail.com''
+    WHERE Customer_Email_Address__c  = ''%delaine.gaston@gmail.com%'''
+    EXEC sp_executesql @SQL
+    SET @SQL = 'UPDATE ' + @stagingTable + '
+    SET Customer_Email_Address__c  = ''susanb7@ymail.com''
+    WHERE Customer_Email_Address__c  = ''%susanb7@ymail.com%'''
+    EXEC sp_executesql @SQL
+    SET @SQL = 'UPDATE ' + @stagingTable + '
+    SET Customer_Email_Address__c  = ''philromah@yahoo.com''
+    WHERE Customer_Email_Address__c  = ''%philromah@yahoo.com%'''
+    EXEC sp_executesql @SQL
+    SET @SQL = 'UPDATE ' + @stagingTable + '
+    SET Customer_Email_Address__c  = ''thuzar77@gmail.com''
+    WHERE Customer_Email_Address__c  = ''%thuzar77@gmail.com%'''
+    EXEC sp_executesql @SQL
 
 
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
@@ -71,6 +93,13 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXRef', 'Sales_Associate_3__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXRef', 'Sales_Associate_4__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'OpportunityXRef', 'Opportunity__c'
+
+  SET @SQL = 'SELECT * INTO ' + @stagingTable + '2 FROM ' + @stagingTable + ' ORDER BY Opportunity__c'
+  EXEC sp_executeSQL @SQL
+  SET @SQL = 'DROP TABLE ' + @stagingTable
+  EXEC sp_Executesql @SQL
+  SET @SQL = 'EXEC sp_rename ''' + @stagingTable + '2'', ''' + @stagingTable + ''''
+  EXEC sp_executeSQL @SQL
 
       SET @SQL = 'EXEC SF_Tableloader ''Upsert:IgnoreFailures(5)'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable + ''', ''Old_SF_ID__C'''
 

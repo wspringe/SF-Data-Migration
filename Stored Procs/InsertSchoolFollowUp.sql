@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[School_FollowUp] (
+CREATE PROCEDURE [dbo].[School_FollowUp] (
   @objectName VARCHAR(50),
   @uniqueIdentifier VARCHAR(50),
   @fieldToUpdate VARCHAR(50),
@@ -24,7 +24,7 @@ ALTER PROCEDURE [dbo].[School_FollowUp] (
 AS
   declare @SQL NVARCHAR(1000)
   DECLARE @updateTable VARCHAR(50), @targetOrgTable VARCHAR(50), @XrefTable VARCHAR(50), @stagingTable VARCHAR(50)
-  SET @updateTable = @objectName + '_Update' 
+  SET @updateTable = @objectName + '_Update'
   SET @targetOrgTable = @objectName + '_FromTarget'
   SET @XrefTable = @objectName + 'Xref'
   SET @stagingTable = @objectName + '_Stage'
@@ -32,7 +32,7 @@ AS
   SET @SQL = 'IF OBJECT_ID(''' + @updateTable + ''', ''U'') IS NOT NULL' +
     char(10) + 'DROP TABLE ' + @updateTable
   EXEC sp_executesql @SQL
-  
+
   RAISERROR ('Creating %s table', 0, 1, @updateTable) WITH NOWAIT
   SET @SQL = 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + '''' +
     char(10) + 'EXEC sp_rename ''' + @objectName + ''', ''' + @updateTable + ''''
@@ -41,7 +41,7 @@ AS
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL' +
     char(10) + 'DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
-  
+
   RAISERROR ('Creating %s table', 0, 1, @updateTable) WITH NOWAIT
   SET @SQL = 'EXEC SF_Replicate ''' + @sourceLinkedServerName + ''', ''' + @objectName + ''''
   EXEC sp_executesql @SQL
@@ -50,12 +50,12 @@ AS
 
   EXEC Create_Cross_Reference_Table @objectName, @uniqueIdentifier, @targetLinkedServerName, @sourceLinkedServerName
   -- idea: update field on stage table, then copy column over to update table
-  EXEC Replace_NewIds_With_OldIds @stagingTable,  @XrefTable,  @fieldToUpdate 
+  EXEC Replace_NewIds_With_OldIds @stagingTable,  @XrefTable,  @fieldToUpdate
 
   SET @SQL = 'UPDATE ' + @updateTable +
-            char(10) + 'SET ' + @fieldToUpdate + ' = ' + @stagingTable + '.' + @fieldToUpdate + 
-            char(10) + 'FROM ' + @updateTable + 
-            char(10) + 'JOIN ' + @stagingTable + 
+            char(10) + 'SET ' + @fieldToUpdate + ' = ' + @stagingTable + '.' + @fieldToUpdate +
+            char(10) + 'FROM ' + @updateTable +
+            char(10) + 'JOIN ' + @stagingTable +
             char(10) + 'ON ' + @updateTable + '.Old_SF_ID__c = ' + @stagingTable + '.Id'
   EXEC sp_executesql @SQL
 

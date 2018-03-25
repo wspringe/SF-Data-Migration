@@ -22,9 +22,9 @@ ALTER PROCEDURE [dbo].[Insert_Plan] (
 AS
   declare @SQL NVARCHAR(1000)
   DECLARE @stagingTable VARCHAR(50), @targetOrgTable VARCHAR(50)
-  SET @stagingTable = @objectName + '_Stage' 
+  SET @stagingTable = @objectName + '_Stage'
   SET @targetOrgTable = @objectName + '_FromTarget'
-  
+
   RAISERROR ('Dropping %s if table exists.', 0, 1, @stagingTable) WITH NOWAIT
   -- Dropping table if table exists
   SET @SQL = 'IF OBJECT_ID(''' + @stagingTable + ''', ''U'') IS NOT NULL
@@ -34,7 +34,7 @@ AS
   SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NOT NULL
     DROP TABLE ' + @targetOrgTable
   EXEC sp_executesql @SQL
-  
+
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
   EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
@@ -69,7 +69,7 @@ AS
 
   SET @SQL = 'SELECT * INTO ' + @stagingTable + '2 FROM ' + @stagingTable + ' ORDER BY Community__c'
   EXEC sp_executeSQL @SQL
-  SET @SQL = 'DROP TABLE ' + @stagingTable + '2'
+  SET @SQL = 'DROP TABLE ' + @stagingTable
   EXEC sp_Executesql @SQL
   SET @SQL = 'EXEC sp_rename ''' + @stagingTable + '2'', ''' + @stagingTable + ''''
   EXEC sp_executeSQL @SQL

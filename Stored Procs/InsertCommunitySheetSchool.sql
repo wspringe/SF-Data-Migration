@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_CommunitySheetSchool] (
+ALTER PROCEDURE [dbo].[Insert_CommunitySheetSchool] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -44,14 +44,6 @@ AS
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
 
-  -- Dropping object table from source if already have it
-  RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NULL'
-             + char(10) + 'BEGIN'
-             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''''
-             + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
-             + char(10) + 'END'
-  EXEC sp_executesql @SQL
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
   EXEC Create_Id_Based_Cross_Reference_Table 'Community_Sheet__c', @targetLinkedServerName, @sourceLinkedServerName
@@ -60,23 +52,9 @@ AS
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'School__cXref', 'Meritage_User__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'School__cXref', 'School__c'
 
-  SET @SQL = 'DECLARE @ret_code Int' +
-        char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
-        BEGIN' +
-          char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
-          char(10) + 'IF @ret_code != 0' +
-          char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
-        char(10) + 'END
-      ELSE
-        BEGIN' +
-        char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_TableLoader ''Insert'', ''' + @targetLinkedServerName +''', ''' + @stagingTable + '''' +
-          char(10) + 'IF ' + '@ret_code' + ' != 0' +
-            char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
-        END'
+  SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''
   EXEC SP_ExecuteSQL @SQL
 
   GO
