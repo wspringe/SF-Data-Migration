@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[School_FollowUp] (
+ALTER PROCEDURE [dbo].[WorkOrder_FollowUp] (
   @objectName VARCHAR(50),
   @fieldToUpdate VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),

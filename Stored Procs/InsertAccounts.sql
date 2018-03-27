@@ -64,6 +64,8 @@ AS
   RAISERROR('Setting null record types and person record types to a customer accont', 0 ,1) WITH NOWAIT
   SET @SQL = 'UPDATE ' + @stagingTable + ' SET RecordTypeID = ''0124D0000008nCvQAI'' WHERE RecordTypeID IS NULL OR RecordTypeID = ''012C0000000Q4kiIAC'''
   EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Primary_Email__c = ''28mo@yahoo.com'' WHERE Primary_Email__c = ''_28mo@yahoo.comjme-'''
+  EXEC sp_executesql @SQL
 
   RAISERROR('Adding row numbers to table in order to split it...', 0, 1) WITH NOWAIT
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' ADD [Sort] int IDENTITY (1,1)'

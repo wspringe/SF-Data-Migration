@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_Cobuyer] (
+CREATE PROCEDURE [dbo].[Insert_DataStagingDetailWarranty] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -46,16 +46,25 @@ AS
 
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  EXEC Create_Id_Based_Cross_Reference_Table 'Contact', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Opportunity', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Sale__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Account', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Case', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Data_Staging_Header__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'MH_Work_Order__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Lot__c', @targetLinkedServerName, @sourceLinkedServerName
 
 
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Contact__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'OpportunityXref', 'Opportunity__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Sale__cXref', 'Sale__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Case_Warranty_Coordinator__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Case_Warranty_Rep__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Case_Caller_Name__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Case_Case_Number__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Case_Customer_Name__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'WO_Vendor_Name__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Data_Staging_Header__cXref', 'Data_Staging_Header__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Lot__cXref', 'Lot__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'MH_Work_Order__cXref', 'WO_MH_Work_Order__c'
 
 
   SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''

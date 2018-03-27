@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Insert_AreaPlanMasterLink] (
+ALTER PROCEDURE [dbo].[Insert_Subscription] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -48,14 +48,48 @@ AS
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Division__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Community_Sheet__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Contact', @targetLinkedServerName, @sourceLinkedServerName
 
 
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Contact__c'
 
 
-  SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''
-  EXEC SP_ExecuteSQL @SQL
+  RAISERROR('Adding row numbers to table in order to split it...', 0, 1) WITH NOWAIT
+  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' ADD [Sort] int IDENTITY (1,1)'
+  EXEC sp_executesql @SQL
+
+  RAISERROR('Splitting %s table into ~200,000 record tables', 0, 1, @stagingTable) WITH NOWAIT
+  DECLARE @maxRows INT
+  DECLARE @i INT = 1
+  DECLARE @count INT = 0
+  SELECT @maxRows = COUNT(Id) FROM Subscription__c_Stage --don't forget to change this
+  WHILE @i < @maxRows
+  BEGIN
+    SET @SQL = 'SELECT *
+    INTO ' + @stagingTable + '_Split' + CAST(@count AS NVARCHAR(10)) +
+    CHAR(10) + 'FROM ' + @stagingTable + '
+    WHERE Sort >= '  + CAST(@i AS NVARCHAR(10)) + ' AND Sort <= '
+    SET @i = @i + 200000
+    IF @i > @maxRows
+      SET @i = @maxRows
+    SET @SQL = @SQL + CAST(@i AS NVARCHAR(10)) + ' ORDER BY Contact__c'
+    SET @count = @count + 1
+    RAISERROR('%d iteration of loop', 0, 1, @count) WITH NOWAIT
+    EXEC sp_executeSQL @sql
+  END
+
+  RAISERROR('Upserting split tables...', 0, 1) WITH NOWAIT
+  SET @i = 0
+  WHILE @i < @count
+  BEGIN
+      SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable + '_Split' + CAST(@i AS NVARCHAR(2)) + ''', ''Old_SF_ID__C'''
+      SET @i = @i + 1
+      EXEC sp_executeSQL @SQL
+  END
 
   GO

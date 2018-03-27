@@ -4,10 +4,11 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_Cobuyer] (
+ALTER PROCEDURE [dbo].[Insert_Group] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
-  @sourceLinkedServerName VARCHAR(50)
+  @sourceLinkedServerName VARCHAR(50),
+  @companyId VARCHAR(18)
 
   /*
     This stored procedure is used for inserting and upserting data for the Marketing Area object.
@@ -32,33 +33,23 @@ AS
   EXEC sp_executesql @SQL
 
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
+  EXEC SF_Replicate @sourceLinkedServerName, @objectName
   IF @@Error != 0
     print 'Error replicating ' + @objectName
   RAISERROR ('Done', 0, 1) WITH NOWAIT
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
-  RAISERROR ('Creating Error column.', 0, 1) WITH NOWAIT
-  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
+  SET @SQL = 'UPDATE ' + @stagingTable + ' SET OwnerId = ''' + @companyId + ''''
   EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
-  EXEC sp_executesql @SQL
-
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  EXEC Create_Id_Based_Cross_Reference_Table 'Contact', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Opportunity', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Sale__c', @targetLinkedServerName, @sourceLinkedServerName
-
+  EXEC Create_Cross_Reference_Table 'UserRole', 'Name', @targetLinkedServerName, @sourceLinkedServerName
 
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Contact__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'OpportunityXref', 'Opportunity__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Sale__cXref', 'Sale__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserRoleXref', 'RelatedId'
 
-
-  SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''
+  SET @SQL = 'EXEC SF_Tableloader ''Insert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''''
   EXEC SP_ExecuteSQL @SQL
 
   GO

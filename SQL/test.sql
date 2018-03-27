@@ -172,3 +172,9 @@ EXEC SF_Replicate 'SALESFORCE', 'Opportunity__c', 'pkchunk'
 SELECT * FROM Opportunity__c WHERE Desired_Monthly_Payment__C > 5000
 
 DROP TABLE Account_Target
+
+EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c', 'SFDC_Target', 'SALESFORCE'
+EXEC Insert_CommunityPlanMaster 'Community_Plan_Master__c', 'SFDC_Target', 'SALESFORCE'
+EXEC Insert_Addendum 'Addendum__c', 'SFDC_Target', 'SALESFORCE2'
+SELECT * FROM Account_Stage_Split3_Result WHERE Error != 'Operation Successful.'
+SELECT * FROm Addendum__c_Stage_Result WHERE Error != 'Operation Successful.'

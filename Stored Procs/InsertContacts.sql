@@ -52,18 +52,28 @@ AS
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
 
-  -- Dropping object table from source if already have it
-  RAISERROR('Dropping %s_FromTarget table if have it.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NOT NULL'
-             + char(10) + 'DROP TABLE ' + @targetOrgTable
+  SET @SQL = 'UPDATE '+ @stagingTable + ' Email = ''paula_devera@yahoo.com''
+              WHERE Email = ''paula_devera@yahoo.com-'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' Email = ''susanb7@ymail.com''
+              WHERE Email LIKE ''%susanb7@ymail.com%'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' Email = ''joycedonald@comcast.net''
+              WHERE Email LIKE ''%joycedonald@comcast.net%'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' Email = ''28mo@yahoo.com''
+              WHERE Email = ''%28mo@yahoo.comjme%'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' Email = ''delaine.gaston@gmail.com''
+              WHERE Email LIKE ''%delaine.gaston@gmail.com%'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' Email = ''thuzar77@gmail.com''
+              WHERE Email LIKE ''%thuzar77@gmail.com%'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE '+ @stagingTable + ' Email = ''philromah@yahoo.com''
+              WHERE Email LIKE ''%philromah@yahoo.com%'''
   EXEC sp_executesql @SQL
 
-  --Replicating object table from target
-  RAISERROR('Replicating %s table from target org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_REPLICATE 'SFDC_TARGET', @objectName
-  -- Rename table to add _FromTarget
-  EXEC sp_rename @objectName, @targetOrgTable
-  RAISERROR('Done.', 0, 1) WITH NOWAIT
 
   RAISERROR('Setting columns to NULL that cannot be used yet.', 0, 1)
   SET @SQL = 'UPDATE ' + @stagingTable + ' SET ReportsToId = '''''

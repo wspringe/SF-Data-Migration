@@ -20,7 +20,7 @@ ALTER PROCEDURE [dbo].[Insert_Lot] (
 */
 )
 AS
-  declare @SQL NVARCHAR(1000)
+  declare @SQL NVARCHAR(4000)
   DECLARE @stagingTable VARCHAR(50), @targetOrgTable VARCHAR(50)
   SET @stagingTable = @objectName + '_Stage' 
   SET @targetOrgTable = @objectName + '_FromTarget'
