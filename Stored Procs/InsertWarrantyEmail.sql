@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_WarrantyEmail] (
+ALTER PROCEDURE [dbo].[Insert_WarrantyEmail] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -43,6 +43,9 @@ AS
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
+
+  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' ALTER COLUMN OwnerId NCHAR(18) NULL'
+  EXEC sp_executeSQL @SQL
 
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT

@@ -28,6 +28,7 @@ EXEC Insert_CustomSettings 'Trigger_Bypass__c'
 EXEC Insert_CustomSettings 'Warranty_Division_Filter__c'
 EXEC Insert_CustomSettings 'Warranty_Vendor_Lookup__c'
 
+
 -- spot for inserting Area_Plan_Master_Link - have to revisit to add related list of community plan master which has community
 EXEC Insert_AreaPlanMasterLink 'Area_Plan_Master_Link__c'
 EXEC Insert_CastIronLastRunTime 'CastIronLastRunTime__c'

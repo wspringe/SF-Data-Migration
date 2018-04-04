@@ -47,7 +47,7 @@ AS
   SET @SQL = 'EXEC sp_rename ''' + @objectName + ''', ''' + @stagingTable + ''''
   EXEC sp_executesql @sql
 
-  EXEC Create_Id_Based_Cross_Reference_Table @objectName, @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table_Standard_Objects @objectName, @targetLinkedServerName, @sourceLinkedServerName
   -- idea: update field on stage table, then copy column over to update table
   EXEC Replace_NewIds_With_OldIds @stagingTable,  @XrefTable,  @fieldToUpdate
 

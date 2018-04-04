@@ -5,10 +5,8 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[Create_RecordType_Cross_Reference_Table] (
+CREATE PROCEDURE [dbo].[Create_Id_Based_Cross_Reference_Table_Standard_Objects] (
   @objectName VARCHAR(50),
-  @uniqueIdentifier VARCHAR (50),
-  @sObjectType VARCHAR (50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
 
@@ -25,7 +23,7 @@ AS
 
   SET @objTarget = @objectName + '_Target'
   SET @objSource = @objectName + '_Source'
-  SET @xRefTable = @sObjectType + @objectName + 'XRef'
+  SET @xRefTable = @objectName + 'XRef'
 
   SET @SQL = 'IF OBJECT_ID(''' + @xRefTable + ''', ''U'') IS NOT NULL
   BEGIN
@@ -50,10 +48,9 @@ AS
   IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
 				 WHERE TABLE_NAME = @xRefTable)
   BEGIN
-	  SET @SQL = 'SELECT s.Id, s.' + @uniqueIdentifier + ' 
-	  INTO ' + @xRefTable + ' 
-	  FROM dbo.' + @objSource + ' s
-    WHERE SobjectType = ''' + @sObjectType + ''''
+	  SET @SQL = 'SELECT s.Id 
+	  INTO ' + @objectName + 'XRef 
+	  FROM dbo.' + @objSource + ' s'
 	  EXEC sp_executesql @SQL
 	  RAISERROR ( 'Created %s cross-reference table.', 0, 1, @objectName) WITH NOWAIT
   END
@@ -84,7 +81,7 @@ AS
   -- Add new column of TargetID to cross-reference table if it does not exist in the table
   IF COL_LENGTH('dbo.' + @xRefTable, 'TargetID') IS NULL
   BEGIN
-	  SET @SQL = 'ALTER TABLE ' + @xRefTable + ' add [TargetID] NCHAR(18)'
+	  SET @SQL = 'ALTER TABLE ' + @objectName + 'XRef add [TargetID] NCHAR(18)'
 	  EXEC sp_executesql @SQL
   END
   ELSE
@@ -94,7 +91,7 @@ AS
   SET @SQL = 'UPDATE dbo.' + @xRefTable + ' 
   set TargetID = t.Id
   FROM ' + @objTarget + ' t JOIN ' + @xRefTable + ' s
-    on t.' + @uniqueIdentifier + ' = s.' + @uniqueIdentifier + ' AND t.SobjectType = ''' + @sObjectType + ''''
+    on t.Old_SF_ID__c' + ' = s.SourceId'
   EXEC sp_executesql @SQL
   RAISERROR ( 'Filled in %s cross-reference table', 0, 1, @objectName) WITH NOWAIT
 

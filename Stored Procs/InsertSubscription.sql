@@ -31,6 +31,12 @@ AS
     DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
 
+  RAISERROR('Dropping all related split tables', 0 , 1) WITH NOWAIT
+  -- taken from http://www.sqlservercurry.com/2012/12/drop-all-tables-in-database-whose-name.html
+  SET @SQL = ''
+  SELECT @sql=@sql + ' DROP TABLE '+table_name from INFORMATION_SCHEMA.TABLES where table_name like @stagingTable + '_Split_%'
+  EXEC sp_executeSQL @SQL
+
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
   EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
@@ -46,10 +52,10 @@ AS
 
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
-  EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Division__c', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Community_Sheet__c', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Contact', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Subscription__c', @targetLinkedServerName, @sourceLinkedServerName
 
 
   -- Update stage table with new Ids for Region lookup
@@ -57,6 +63,7 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Division__cXref', 'Division__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community_Sheet__cXref', 'Community_Sheet__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'ContactXref', 'Contact__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Subscription__cRecordTypeXref', 'RecordTypeId'
 
 
   RAISERROR('Adding row numbers to table in order to split it...', 0, 1) WITH NOWAIT
@@ -74,7 +81,7 @@ AS
     INTO ' + @stagingTable + '_Split' + CAST(@count AS NVARCHAR(10)) +
     CHAR(10) + 'FROM ' + @stagingTable + '
     WHERE Sort >= '  + CAST(@i AS NVARCHAR(10)) + ' AND Sort <= '
-    SET @i = @i + 200000
+    SET @i = @i + 50000
     IF @i > @maxRows
       SET @i = @maxRows
     SET @SQL = @SQL + CAST(@i AS NVARCHAR(10)) + ' ORDER BY Contact__c'

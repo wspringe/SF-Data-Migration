@@ -40,7 +40,7 @@ AS
   EXEC sp_rename @objectName, @stagingTable -- rename table to add _Stage at the end of it
 
   RAISERROR ('Deleting customer users and User Wesley from table', 0, 1) WITH NOWAIT
-  EXEC sp_executesql N'DELETE FROM User_Stage WHERE UPPER(UserType) LIKE ''PowerCustomerSuccess'''
+  EXEC sp_executesql N'DELETE FROM User_Stage WHERE UPPER(UserType) != ''Standard'''
   EXEC sp_executesql N'DELETE FROM User_Stage WHERE UPPER(Email) LIKE ''wesley.springer@meritagehomes.com'''
 
   RAISERROR ('Creating Cross-Ref table for profile...', 0, 1) WITH NOWAIT
@@ -99,41 +99,20 @@ AS
 						BMCServiceDesk__SelfService_Preferences__c,
 						BMCServiceDesk__skipQVWizIntro__c,
 						BMCServiceDesk__UniqueUserIDInSource__c,
-						BMCServiceDesk__VIP__c'
+						BMCServiceDesk__VIP__c,
+            ContactId'
   ------------------------------------------------------
   -- Set the following fields in the table to empty, and will have to update these fields later; this will have to be changed for each object
 
   RAISERROR ('Setting circular definition fields in %s table to NULL.', 0, 1, @objectName) WITH NOWAIT
-  set @SQL = 'UPDATE ' + @stagingTable + ' set DelegatedApproverId = NULL, ManagerId = NULL, ContactId = NULL, AccountId = NULL, CallCenterId = NULL'
+  set @SQL = 'UPDATE ' + @stagingTable + ' set DelegatedApproverId = NULL, ManagerId = NULL, , AccountId = NULL, CallCenterId = NULL'
   exec sp_executesql @SQL
   ------------------------------------------------------
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserRoleXref', 'UserRoleId'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'ProfileXref', 'ProfileId'
 
-  RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NULL'
-             + char(10) + 'BEGIN'
-             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''''
-             + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
-             + char(10) + 'END'
-  EXEC sp_executesql @SQL
-
-
-  SET @SQL = 'DECLARE @ret_code Int' +
-          char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
-          BEGIN' +
-            char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-            char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
-            char(10) + 'IF @ret_code != 0' +
-            char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
-          char(10) + 'END
-        ELSE
-          BEGIN' +
-          char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
-            char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_TableLoader ''Insert'', ''' + @targetLinkedServerName +''', ''' + @stagingTable + '''' +
-            char(10) + 'IF ' + '@ret_code' + ' != 0' +
-              char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
-          END'
+  RAISERROR('Upserting table...', 0, 1, @objectName) WITH NOWAIT
+  SET @SQL = 'EXEC SF_Tableloader ''Upsert:IgnoreFailures(5)'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''
   EXEC SP_ExecuteSQL @SQL
   GO
 

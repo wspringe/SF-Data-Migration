@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_WorkOrder] (
+ALTER PROCEDURE [dbo].[Insert_WorkOrder] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50),
@@ -33,7 +33,7 @@ AS
   EXEC sp_executesql @SQL
 
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
-  EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
+  EXEC SF_Replicate @sourceLinkedServerName, @objectName
   IF @@Error != 0
     print 'Error replicating ' + @objectName
   RAISERROR ('Done', 0, 1) WITH NOWAIT

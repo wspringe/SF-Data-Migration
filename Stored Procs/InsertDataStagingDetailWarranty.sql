@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_DataStagingDetailWarranty] (
+ALTER PROCEDURE [dbo].[Insert_DataStagingDetailWarranty] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -59,7 +59,7 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Case_Warranty_Coordinator__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'Case_Warranty_Rep__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Case_Caller_Name__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Case_Case_Number__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'CaseXref', 'Case_Case_Number__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Case_Customer_Name__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'WO_Vendor_Name__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Data_Staging_Header__cXref', 'Data_Staging_Header__c'

@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_WarrantyConfirmation] (
+ALTER PROCEDURE [dbo].[Insert_WarrantyConfirmation] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -53,7 +53,7 @@ AS
   -- Update stage table with new Ids for Region lookup
   RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Warranty_Appointment__cXref', 'Division__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Warranty_Appointment__cXref', 'Warranty_Appointment__c'
 
 
   SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''

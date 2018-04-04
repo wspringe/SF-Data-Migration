@@ -82,7 +82,7 @@ AS
   EXEC Create_Id_Based_Cross_Reference_Table 'Marketing_Area__c', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Account', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Contact'
+  EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Contact', @targetLinkedServerName, @sourceLinkedServerName
 
 
    -- Update stage table with new UserIds for Owner'

@@ -78,7 +78,101 @@ AS
 
   RAISERROR('Deleting records that will not be leads', 0 ,1) WITH NOWAIT
   SET @SQL = 'DELETE FROM ' + @stagingTable + '
-              WHERE Customer_Status__c = ''A – Prospect'' OR Customer_Status__c = ''B – Prospect'' OR Total_Sale_Count__C > 0'
+              WHERE Total_Sale_Count__C > 0'
+  EXEC sp_executesql @SQL
+  SET @SQL = 'DELETE FROM ' + @stagingTable + '
+              WHERE Customer_Status__c = ''A – Prospect'' AND Primary_Sales_Associate__c != NULL AND PSA_Profile_Name__c = ''Meritage Sales Associate'' AND Opportunity_Status__c != ''Inactive'''
+  EXEC sp_executesql @SQL
+  SET @SQL = 'DELETE FROM ' + @stagingTable + '
+              WHERE Customer_Status__c = ''B – Prospect'' AND Primary_Sales_Associate__c != NULL AND PSA_Profile_Name__c = ''Meritage Sales Associate'' AND Opportunity_Status__c != ''Inactive'''
+  EXEC sp_executesql @SQL
+
+  -- Data transformation to Lead status and Lead Owner based on provided pictur
+  RAISERROR('Performing data transformation on Lead Status and Lead Owner...', 0, 1) WITH NOWAIT
+  -- If C - Lead, Active, updated within last 18 months, set to Working Lead owned by PSA
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Working'', OwnerID = Primary_Sales_Associate__c
+              WHERE Customer_Status__c = ''C – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18 AND PSA_Profile_Name = ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If C - Lead, Active, updated within last 18 months and NOT owned by an OSC, set to Nurturing Lead owned by System
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerID = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''C – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18  AND PSA_Profile_Name != ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If C-Lead, Active, updated within last 18 months, blank PSA, and has an OSC, Nurturing lead assigned to OSC
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerID = Original_OSC__c
+              WHERE Customer_Status__c = ''C – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18  AND Primary_Sales_Associate__c IS NULL AND Original_OSC__c IS NOT NULL AND OSC_Profile_Name__c = ''Meritage Sales Associate'' OR OSC_Profile_Name__c = ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If C - Lead, active, updated within last 18 months, blank PSA and OSC, assign to System as nurturing lead
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerID = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''C – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18  AND Primary_Sales_Associate__c IS NULL AND Original_OSC__c IS NOT NULL AND OSC_Profile_Name__c != ''Meritage Sales Associate'' AND OSC_Profile_Name__c != ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If C - Lead, Inactive, set to Nurturing lead owned by System
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerID = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''C – Lead'' AND Opportunity_Status__c = ''Inactive'''
+  EXEC sp_executesql @SQL
+  -- If E - Lead, Active, updated within 18 months, set to Working lead owned by PSA
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Working'', OwnerId = Primary_Sales_Associate__c
+              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18 AND PSA_Profile_Name = ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If E - Lead, Active, updated within last 18 months and NOT owned by an OSC, set to Nurturing Lead owned by System
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerID = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18  AND PSA_Profile_Name != ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+   -- If E-Lead, Active, updated within last 18 months, blank PSA, and has an OSC, Nurturing lead assigned to OSC
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerID = Original_OSC__c
+              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18  AND Primary_Sales_Associate__c IS NULL AND Original_OSC__c IS NOT NULL AND OSC_Profile_Name__c = ''Meritage Sales Associate'' OR OSC_Profile_Name__c = ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If E - Lead, active, updated within last 18 months, blank PSA and OSC, assign to System as nurturing lead
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerID = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18  AND Primary_Sales_Associate__c IS NULL AND Original_OSC__c IS NOT NULL AND OSC_Profile_Name__c != ''Meritage Sales Associate'' AND OSC_Profile_Name__c != ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If E - Lead, Inactive, set to Nurturing owned by System
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Inactive'''
+  EXEC sp_executesql @SQL
+  -- If updated over 18 months ago, set to Nurturing lead owned by PSA if PSA is a SA or OSC
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = Primary_Sales_Associate__c
+              WHERE Months_Since_Last_Update__c > 18 AND PSA_Profile_Name__c = ''Meritage Sales Associate'' OR PSA_Profile_Name__c = ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If updated over 18 months ago, set to Nurturing lead owned by System if PSA is NOT a SA or OSC
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Months_Since_Last_Update__c > 18 AND PSA_Profile_Name__c != ''Meritage Sales Associate'' OR PSA_Profile_Name__c != ''Meritage Online Sales Consultant'''
+  EXEC sp_executesql @SQL
+  -- If A - Prospect, Active and not owned by an SA, set to Nurturing Lead owned by System (they lost the lead)
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''A – Prospect'' AND Customer_Status__c = ''Active'' AND PSA_Profile_Name__c != ''Meritage Sales Associate'''
+  EXEC sp_executesql @SQL
+  -- If B - Prospect, Active and not owned by an SA, set to Nurturing Lead owned by System (they lost the lead)
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''B – Prospect'' AND Customer_Status__c = ''Active'' AND PSA_Profile_Name__c != ''Meritage Sales Associate'''
+  EXEC sp_executesql @SQL
+  -- If A - Prospect, Inactive, set to Nurturing lead owned by System
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''A – Prospect'' AND Opportunity_Status__c = ''Inactive'''
+  EXEC sp_executesql @SQL
+  -- If B - Prospect, Inactive, set to Nurturing lead owned by System
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''B – Prospect'' AND Opportunity_Status__c = ''Inactive'''
+  EXEC sp_executesql @SQL
+  -- If E - Lead, active not owned by an SA or OSC, set to Nurturing lead owned by System
+  SET @SQL = 'UPDATE ' + @stagingTable + '
+              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
+              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Active'' AND OSC_Profile_Name__c != ''Meritage Online Sales Consultant'' AND PSA_Profile_Name__c != ''Meritage Sales Associate'''
   EXEC sp_executesql @SQL
 
   RAISERROR('Renaming columns to fit into Leads...', 0 ,1) WITH NOWAIT
@@ -182,33 +276,6 @@ AS
   SET @SQL = 'UPDATE ' + @stagingTable + '
               SET How_Did_You_learn_About_Meritage_Homes__c = ''MeritageHomes.com''
               WHERE How_Did_You_learn_About_Meritage_Homes__c = ''www.MeritageHomes.com'''
-  EXEC sp_executesql @SQL
-
-  -- Data transformation to Lead status and Lead Owner based on provided pictur
-  RAISERROR('Performing data transformation on Lead Status and Lead Owner...', 0, 1) WITH NOWAIT
-  SET @SQL = 'UPDATE ' + @stagingTable + '
-              SET Status = ''Working'', OwnerID = Primary_Sales_Associate__c
-              WHERE Customer_Status__c = ''C – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18'
-  EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE ' + @stagingTable + '
-              SET Status = ''Nurturing'', OwnerID = ''' + @systemUserId + '''
-              WHERE Customer_Status__c = ''C – Lead'' AND Opportunity_Status__c = ''Inactive'' AND Months_Since_Last_Update__c < 18'
-  EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE ' + @stagingTable + '
-              SET Status = ''Working'', OwnerId = Primary_Sales_Associate__c
-              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Active'' AND Months_Since_Last_Update__c < 18'
-  EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE ' + @stagingTable + '
-              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
-              WHERE Customer_Status__c = ''E – Lead'' AND Opportunity_Status__c = ''Inactive'' AND Months_Since_Last_Update__c < 18'
-  EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE ' + @stagingTable + '
-              SET Status = ''Nurturing'', OwnerId = Primary_Sales_Associate__c
-              WHERE Months_Since_Last_Update__c > 18 AND Primary_Sales_Associate__c = '''''
-  EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE ' + @stagingTable + '
-              SET Status = ''Nurturing'', OwnerId = ''' + @systemUserId + '''
-              WHERE Months_Since_Last_Update__c > 18 And Primary_Sales_Associate__c != '''''
   EXEC sp_executesql @SQL
 
   -- Placeholder

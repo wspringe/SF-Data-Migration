@@ -51,19 +51,19 @@ AS
     RAISERROR('Fixing one-off emails...', 0, 1) WITH NOWAIT
     SET @SQL = 'UPDATE ' + @stagingTable + '
     SET Customer_Email_Address__c  = ''delaine.gaston@gmail.com''
-    WHERE Customer_Email_Address__c  = ''%delaine.gaston@gmail.com%'''
+    WHERE Customer_Email_Address__c  LIKE ''%delaine.gaston@gmail.com%'''
     EXEC sp_executesql @SQL
     SET @SQL = 'UPDATE ' + @stagingTable + '
     SET Customer_Email_Address__c  = ''susanb7@ymail.com''
-    WHERE Customer_Email_Address__c  = ''%susanb7@ymail.com%'''
+    WHERE Customer_Email_Address__c  LIKE ''%susanb7@ymail.com%'''
     EXEC sp_executesql @SQL
     SET @SQL = 'UPDATE ' + @stagingTable + '
     SET Customer_Email_Address__c  = ''philromah@yahoo.com''
-    WHERE Customer_Email_Address__c  = ''%philromah@yahoo.com%'''
+    WHERE Customer_Email_Address__c  LIKE ''%philromah@yahoo.com%'''
     EXEC sp_executesql @SQL
     SET @SQL = 'UPDATE ' + @stagingTable + '
     SET Customer_Email_Address__c  = ''thuzar77@gmail.com''
-    WHERE Customer_Email_Address__c  = ''%thuzar77@gmail.com%'''
+    WHERE Customer_Email_Address__c  LIKE ''%thuzar77@gmail.com%'''
     EXEC sp_executesql @SQL
 
 

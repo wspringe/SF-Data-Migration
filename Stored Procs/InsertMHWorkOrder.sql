@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_MHWorkOrder] (
+ALTER PROCEDURE [dbo].[Insert_MHWorkOrder] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -48,6 +48,9 @@ AS
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'WorkOrder', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Cost_Code__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Warranty_Appointment__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Warranty_Vendor__c', @targetLinkedServerName, @sourceLinkedServerName
 
 
   -- Update stage table with new Ids for Region lookup

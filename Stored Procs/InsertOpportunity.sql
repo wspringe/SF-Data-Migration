@@ -73,7 +73,7 @@ AS
 
   RAISERROR('Deleting records that will not be Opportunities', 0 ,1) WITH NOWAIT
   SET @SQL = 'DELETE FROM ' + @stagingTable + '
-              WHERE Customer_Status__c != ''A – Prospect'' AND Customer_Status__c != ''B – Prospect'' AND Total_Sale_Count__c = 0'
+              WHERE Customer_Status__c != ''A – Prospect'' AND Customer_Status__c != ''B – Prospect'' AND Total_Sale_Count__c = 0 AND PSA_Profile_Name__c != ''Meritage Sales Associate'''
   EXEC sp_executesql @SQL
 
   RAISERROR('Renaming columns to fit into Leads...', 0 ,1) WITH NOWAIT

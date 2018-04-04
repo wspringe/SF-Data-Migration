@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_ClientRegistration] (
+ALTER PROCEDURE [dbo].[Insert_ClientRegistration] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -48,7 +48,7 @@ AS
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
   EXEC Create_Id_Based_Cross_Reference_Table 'Community__c', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'Account', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_Id_Based_Cross_Reference_Table 'Gift_Card__c', @targetLinkedServerName, @sourceLinkedServerName
+  EXEC Create_Id_Based_Cross_Reference_Table 'Gift_Card_Tracking__c', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Id_Based_Cross_Reference_Table 'MobileWhiteList__c', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Opportunity_Cross_Reference_Table 'Opportunity', @targetLinkedServerName, @sourceLinkedServerName
 
@@ -57,7 +57,7 @@ AS
   RAISERROR('Replacing Ids from target org...', 0, 1) WITH NOWAIT
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community__cXref', 'Community__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Customer__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Gift_Card__cXref', 'Gift_Card__c'
+  EXEC Replace_NewIds_With_OldIds @stagingTable, 'Gift_Card_Tracking__cXref', 'Gift_Card__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'MobileWhiteList__cXref', 'MobileWhiteList__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'OpportunityXref', 'Opportunity__c'
 

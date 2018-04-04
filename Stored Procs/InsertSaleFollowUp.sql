@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Sale_FollowUp] (
+ALTER PROCEDURE [dbo].[Sale_FollowUp] (
   @objectName VARCHAR(50),
   @fieldToUpdate VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
@@ -58,11 +58,37 @@ AS
             char(10) + 'ON ' + @updateTable + '.Old_SF_ID__c = ' + @stagingTable + '.Id'
   EXEC sp_executesql @SQL
 
-  SET @SQL = 'DECLARE @ret_code Int ' +
-          char(10) + 'RAISERROR(''Updating table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC @ret_code = SF_TableLoader ''Update'', ''' + @targetLinkedServerName + ''', ''' + @updateTable + '''' +
-          char(10) + 'IF @ret_code != 0' +
-          char(10) + 'RAISERROR(''Update unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT'
-  EXEC SP_ExecuteSQL @SQL
+  RAISERROR('Adding row numbers to table in order to split it...', 0, 1) WITH NOWAIT
+  SET @SQL = 'ALTER TABLE ' + @updateTable + ' ADD [Sort] int IDENTITY (1,1)'
+  EXEC sp_executesql @SQL
+
+  RAISERROR('Splitting %s table into ~200,000 record tables', 0, 1, @stagingTable) WITH NOWAIT
+  DECLARE @maxRows INT
+  DECLARE @i INT = 1
+  DECLARE @count INT = 0
+  SELECT @maxRows = COUNT(Id) FROM Sale__c_Update --don't forget to change this
+  WHILE @i < @maxRows
+  BEGIN
+    SET @SQL = 'SELECT *
+    INTO ' + @updateTable + '_Split' + CAST(@count AS NVARCHAR(10)) +
+    CHAR(10) + 'FROM ' + @updateTable + '
+    WHERE Sort >= '  + CAST(@i AS NVARCHAR(10)) + ' AND Sort <= '
+    SET @i = @i + 50000
+    IF @i > @maxRows
+      SET @i = @maxRows
+    SET @SQL = @SQL + CAST(@i AS NVARCHAR(10)) + ''
+    SET @count = @count + 1
+    RAISERROR('%d iteration of loop', 0, 1, @count) WITH NOWAIT
+    EXEC sp_executeSQL @sql
+  END
+
+  RAISERROR('Upserting split tables...', 0, 1) WITH NOWAIT
+  SET @i = 0
+  WHILE @i < @count
+  BEGIN
+      SET @SQL = 'EXEC SF_Tableloader ''Update'', ''' + @targetLinkedServerName + ''', ''' + @updateTable + '_Split' + CAST(@i AS NVARCHAR(2)) + ''''
+      SET @i = @i + 1
+      EXEC sp_executeSQL @SQL
+  END
 
   GO

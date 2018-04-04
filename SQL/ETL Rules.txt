@@ -1,0 +1,21 @@
+-- If C - Lead, Active, updated within last 18 months, set to Working Lead owned by PSA
+-- If C - Lead, Active, updated within last 18 months and NOT owned by an OSC, set to Nurturing Lead owned by System
+-- If C - Lead, Active, updated within last 18 months, blank PSA, and has an OSC, Nurturing lead assigned to OSC
+-- If C - Lead, Active, updated within last 18 months, blank PSA and OSC, assign to System as nurturing lead
+-- If C - Lead, Inactive, set to Nurturing lead owned by System
+
+-- If E - Lead, Active, updated within last 18 months, set to Working lead owned by PSA
+-- If E - Lead, Active, updated within last 18 months and NOT owned by an OSC, set to Nurturing Lead owned by System
+-- If E - Lead, Active, updated within last 18 months, blank PSA, and has an OSC, Nurturing lead assigned to OSC
+-- If E - Lead, Active, updated within last 18 months, blank PSA and OSC, assign to System as nurturing lead
+-- If E - Lead, Inactive, set to Nurturing owned by System
+
+-- If updated over 18 months ago, set to Nurturing lead owned by PSA if PSA is a SA or OSC
+-- If updated over 18 months ago, set to Nurturing lead owned by System if PSA is NOT a SA or OSC
+
+-- If A - Prospect, Active and not owned by an SA, set to Nurturing Lead owned by System (they lost the lead)
+-- If B - Prospect, Active and not owned by an SA, set to Nurturing Lead owned by System (they lost the lead)
+-- If A - Prospect, Inactive, set to Nurturing lead owned by System
+-- If B - Prospect, Inactive, set to Nurturing lead owned by System
+
+-- If E - Lead, Active not owned by an SA or OSC, set to Nurturing lead owned by System

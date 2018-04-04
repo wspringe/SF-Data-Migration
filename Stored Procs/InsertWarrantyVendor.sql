@@ -31,6 +31,12 @@ AS
     DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
 
+  RAISERROR('Dropping all related split tables', 0 , 1) WITH NOWAIT
+  -- taken from http://www.sqlservercurry.com/2012/12/drop-all-tables-in-database-whose-name.html
+  SET @SQL = ''
+  SELECT @sql=@sql + ' DROP TABLE '+table_name from INFORMATION_SCHEMA.TABLES where table_name like @stagingTable + '_Split_%'
+  EXEC sp_executeSQL @SQL
+
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
   EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
@@ -73,7 +79,7 @@ AS
     INTO ' + @stagingTable + '_Split' + CAST(@count AS NVARCHAR(10)) +
     CHAR(10) + 'FROM ' + @stagingTable + '
     WHERE Sort >= '  + CAST(@i AS NVARCHAR(10)) + ' AND Sort <= '
-    SET @i = @i + 200000
+    SET @i = @i + 20000
     IF @i > @maxRows
       SET @i = @maxRows
     SET @SQL = @SQL + CAST(@i AS NVARCHAR(10)) + ' ORDER BY Community__c'

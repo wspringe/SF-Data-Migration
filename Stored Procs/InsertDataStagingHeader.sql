@@ -4,7 +4,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[Insert_DataStagingHeader] (
+ALTER PROCEDURE [dbo].[Insert_DataStagingHeader] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
   @sourceLinkedServerName VARCHAR(50)
@@ -31,6 +31,12 @@ AS
     DROP TABLE ' + @stagingTable
   EXEC sp_executesql @SQL
 
+  RAISERROR('Dropping all related split tables', 0 , 1) WITH NOWAIT
+  -- taken from http://www.sqlservercurry.com/2012/12/drop-all-tables-in-database-whose-name.html
+  SET @SQL = ''
+  SELECT @sql=@sql + ' DROP TABLE '+table_name from INFORMATION_SCHEMA.TABLES where table_name like @stagingTable + '_Split_%'
+  EXEC sp_executeSQL @SQL
+
   RAISERROR ('Retrieving %s table from source org...', 0, 1, @objectName) WITH NOWAIT
   EXEC SF_Replicate @sourceLinkedServerName, @objectName, 'pkchunk'
   IF @@Error != 0
@@ -43,6 +49,9 @@ AS
   EXEC sp_executesql @SQL
   SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
   EXEC sp_executesql @SQL
+
+  SET @SQL = 'ALTER TABLE ' + @stagingTable + ' ALTER COLUMN OwnerId NCHAR(18) NULL'
+  EXEC sp_executeSQL @SQL
 
 
   RAISERROR('Creating XRef tables', 0 ,1) WITH NOWAIT
@@ -61,7 +70,6 @@ AS
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'CaseXref', 'Case__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Community__CXref', 'Community__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'AccountXref', 'Customer__c'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'CaseXref', 'Case__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Lot__cXref', 'Lot__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'MH_Work_Order__cXref', 'MH_Work_Order__c'
   EXEC Replace_NewIds_With_OldIds @stagingTable, 'Sale__cXref', 'Sale__c'

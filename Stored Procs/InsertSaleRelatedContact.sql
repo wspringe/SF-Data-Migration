@@ -79,8 +79,7 @@ AS
     SET @i = @i + 20000
     IF @i > @maxRows
       SET @i = @maxRows
-    SET @SQL = @SQL + CAST(@i AS NVARCHAR(10)) + ' ORDER BY Sale
-    __c'
+    SET @SQL = @SQL + CAST(@i AS NVARCHAR(10)) + ' ORDER BY Sale__c'
     SET @count = @count + 1
     RAISERROR('%d iteration of loop', 0, 1, @count) WITH NOWAIT
     EXEC sp_executeSQL @sql

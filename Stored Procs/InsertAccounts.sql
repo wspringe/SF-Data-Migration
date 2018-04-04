@@ -53,7 +53,7 @@ AS
 
   EXEC Create_Cross_Reference_Table 'User', 'Username', @targetLinkedServerName, @sourceLinkedServerName
   EXEC Create_Cross_Reference_Table 'Division__c', 'Name', @targetLinkedServerName, @sourceLinkedServerName
-  EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Account'
+  EXEC Create_RecordType_Cross_Reference_Table 'RecordType', 'Name', 'Account', @targetLinkedServerName, @sourceLinkedServerName
 
 
    -- Update stage table with new UserIds for Owner'

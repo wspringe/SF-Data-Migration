@@ -89,12 +89,23 @@ AS
       RAISERROR ( 'TargetID column already exists.', 0, 1) WITH NOWAIT
 
   -- Fill in the TargetId column
+  IF @XrefTable != 'UserXref'
+  BEGIN
   SET @SQL = 'UPDATE dbo.' + @xRefTable + ' 
   set TargetID = t.Id
   FROM ' + @objTarget + ' t JOIN ' + @xRefTable + ' s
     on t.' + @uniqueIdentifier + ' = s.' + @uniqueIdentifier
   EXEC sp_executesql @SQL
-  RAISERROR ( 'Filled in %s cross-reference table', 0, 1, @objectName) WITH NOWAIT
+  RAISERROR ( 'Filled in %s cross-reference table1', 0, 1, @objectName) WITH NOWAIT
+  END
 
-  
+  IF @XrefTable = 'UserXref'
+  BEGIN
+  SET @SQL = 'UPDATE dbo.' + @xRefTable + ' 
+  set TargetID = t.Id
+  FROM ' + @objTarget + ' t JOIN ' + @xRefTable + ' s
+    on t.' + @uniqueIdentifier + ' = s.' + @uniqueIdentifier + ' OR t.Old_SF_ID__c = s.SourceId' 
+  EXEC sp_executesql @SQL
+  RAISERROR ( 'Filled in %s cross-reference table2', 0, 1, @objectName) WITH NOWAIT
+  END
 

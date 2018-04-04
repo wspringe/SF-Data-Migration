@@ -7,7 +7,8 @@ GO
 ALTER PROCEDURE [dbo].[Insert_Region] (
   @objectName VARCHAR(50),
   @targetLinkedServerName VARCHAR(50),
-  @sourceLinkedServerName VARCHAR(50)
+  @sourceLinkedServerName VARCHAR(50),
+  @ownerId VARCHAR(50)
 
   /*
     This stored procedure is used for inserting and upserting data for the Region object.
@@ -41,38 +42,12 @@ AS
   RAISERROR ('Creating Old SF ID column.', 0, 1) WITH NOWAIT
   SET @SQL = 'ALTER TABLE ' + @stagingTable + ' add [Old_SF_ID__c] NCHAR(18)'
   EXEC sp_executesql @SQL
-  SET @SQL = 'UPDATE '+ @stagingTable + ' SET Old_SF_ID__c = Id'
+  SET @SQL = 'UPDATE ' + @stagingTable + ' SET Old_SF_ID__c = Id'
+  EXEC sp_executesql @SQL
+  SET @SQL = 'UPDATE ' + @stagingTable + ' SET OwnerId = ''' + @ownerId + ''''
   EXEC sp_executesql @SQL
 
-  -- Dropping object table from source if already have it
-  RAISERROR('Creating %s_FromTarget table if it does not already exist.', 0, 1, @objectName) WITH NOWAIT
-  SET @SQL = 'IF OBJECT_ID(''' + @targetOrgTable + ''', ''U'') IS NULL'
-             + char(10) + 'BEGIN'
-             + char(10) + 'EXEC SF_Replicate ''' + @targetLinkedServerName + ''', ''' + @objectName + ''''
-             + char(10) + 'EXEC sp_rename ''' + @objectName + ''',  ''' + @targetOrgTable +  ''''
-             + char(10) + 'END'
-  EXEC sp_executesql @SQL
-
-  EXEC Create_Cross_Reference_Table 'User', 'Username'
-
-  -- Update stage table with new UserIds for Owner'
-  EXEC Replace_NewIds_With_OldIds @stagingTable, 'UserXref', 'OwnerId'
-
-  SET @SQL = 'DECLARE @ret_code Int' +
-        char(10) + 'IF EXISTS (select 1 from ' + @targetOrgTable + ')
-        BEGIN' +
-          char(10) + 'RAISERROR(''Upserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC @ret_code = SF_TableLoader ''Upsert'', ''' + @targetLinkedServerName + ''', ''' + @stagingTable +''', ''Old_SF_ID__c''' +
-          char(10) + 'IF @ret_code != 0' +
-          char(10) + 'RAISERROR(''Upsert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT' +
-        char(10) + 'END
-      ELSE
-        BEGIN' +
-        char(10) + 'RAISERROR(''Inserting table...'', 0, 1) WITH NOWAIT' +
-          char(10) + 'EXEC ' + '@ret_code' + '= dbo.SF_TableLoader ''Insert'', ''' + @targetLinkedServerName +''', ''' + @stagingTable + '''' +
-          char(10) + 'IF ' + '@ret_code' + ' != 0' +
-            char(10) + 'RAISERROR(''Insert unsuccessful. Please investigate.'', 0, 1) WITH NOWAIT
-        END'
+  SET @SQL = 'EXEC SF_Tableloader ''Upsert'', ''' + @targetLinkedServerName +  ''', ''' + @stagingTable + ''', ''Old_SF_ID__c'''
   EXEC SP_ExecuteSQL @SQL
 
   GO
